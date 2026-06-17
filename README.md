@@ -68,6 +68,7 @@ qué — el contenido no circula por chat, vive en disco y queda versionado.
 ## Estructura
 
 ```
+<<<<<<< HEAD
 .
 ├── AGENTS.md              # Mapa para agentes (divulgación progresiva)
 ├── CHECKPOINTS.md         # Criterios de "estado final correcto"
@@ -107,3 +108,26 @@ qué — el contenido no circula por chat, vive en disco y queda versionado.
   implementador no se autoaprueba, el revisor no edita código.
 - **Anti teléfono-descompuesto**: los subagentes escriben sus resultados
   en archivos y solo devuelven una referencia ligera.
+=======
+src/
+├── api/            # Clientes Axios por módulo
+├── components/
+│   ├── layout/     # Sidebar + AppLayout
+│   ├── modals/     # QRModal
+│   └── ui/         # Button, Card, Badge, Input, Modal, Toast, Skeleton, FileUpload
+├── hooks/          # Custom hooks con TanStack Query
+├── pages/          # Una página por sección
+├── router/         # AppRouter + ProtectedRoute + PublicOnlyRoute
+├── store/          # Zustand: auth.store, toast.store
+├── types/          # Interfaces TypeScript
+└── utils/          # format.ts (fechas, errores)
+```
+
+---
+
+## Usuario demo (seed del backend)
+
+| Email | Password |
+|---|---|
+| `jesus.mendez@demo.com` | `Demo1234!` |
+>>>>>>> 84c65738bb340c8334492fa8888e2e36793d48b9
