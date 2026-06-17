@@ -5,7 +5,8 @@ import type { DoctorSnapshot } from '../types/doctor.types';
 
 export const accessCodesApi = {
   generate: () =>
-    api.post<ApiResponse<AccessCode>>('/access-codes/generate').then((r) => r.data.data),
+    api.post<ApiResponse<AccessCode>>(
+      '/access-codes/generate').then((r) => r.data.data),
 
   verify: (code: string) =>
     api.post<ApiResponse<unknown>>('/access-codes/verify', { code }).then((r) => r.data.data),
