@@ -11,21 +11,24 @@ Interfaz web para **MediHistory** — historial médico personal centralizado.
 - **React Hook Form** + Zod (formularios y validación)
 - **Zustand** (estado global: auth, toasts)
 - **date-fns** (formateo de fechas en español)
+- **Recharts** (gráficos del panel de administración)
 - CSS inline / variables CSS (sin librerías de UI)
 
 ---
 
 ## Inicio rápido
 
+> Este proyecto usa **pnpm** (es el gestor con el que se despliega). Usa siempre `pnpm` para instalar dependencias, no `npm`, para mantener `pnpm-lock.yaml` sincronizado.
+
 ```bash
 # 1. Instalar dependencias
-npm install
+pnpm install
 
 # 2. Copiar variables de entorno
 cp .env.example .env
 
 # 3. Iniciar en desarrollo
-npm run dev
+pnpm dev
 # → http://localhost:5173
 ```
 
