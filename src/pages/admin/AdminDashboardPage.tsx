@@ -50,10 +50,10 @@ export default function AdminDashboardPage() {
           </Card>
         ) : (
           <>
-            <MetricCard label="Total usuarios" value={stats?.users.total} icon="👥" />
-            <MetricCard label="Nuevos esta semana" value={stats?.users.new_this_week} icon="📈" />
-            <MetricCard label="Nuevos este mes" value={stats?.users.new_this_month} icon="🗓️" />
-            <MetricCard label="Activos últimos 7 días" value={stats?.users.active_last_7_days} icon="⚡" />
+            <MetricCard label="Total usuarios" value={stats?.users?.total} icon="👥" />
+            <MetricCard label="Nuevos esta semana" value={stats?.users?.new_this_week} icon="📈" />
+            <MetricCard label="Nuevos este mes" value={stats?.users?.new_this_month} icon="🗓️" />
+            <MetricCard label="Activos últimos 7 días" value={stats?.users?.active_last_7_days} icon="⚡" />
           </>
         )}
       </div>
@@ -181,10 +181,10 @@ export default function AdminDashboardPage() {
           Array.from({ length: 4 }).map((_, i) => <Card key={i}><Skeleton height={48} /></Card>)
         ) : (
           <>
-            <MetricCard label="Historiales clínicos" value={stats?.usage.total_histories} icon="📋" />
-            <MetricCard label="Medicamentos registrados" value={stats?.usage.total_medications} icon="💊" />
-            <MetricCard label="Exámenes subidos" value={stats?.usage.total_exams} icon="🔬" />
-            <MetricCard label="Códigos QR generados" value={stats?.usage.total_access_codes} icon="🔗" />
+            <MetricCard label="Historiales clínicos" value={stats?.usage?.total_histories} icon="📋" />
+            <MetricCard label="Medicamentos registrados" value={stats?.usage?.total_medications} icon="💊" />
+            <MetricCard label="Exámenes subidos" value={stats?.usage?.total_exams} icon="🔬" />
+            <MetricCard label="Códigos QR generados" value={stats?.usage?.total_access_codes} icon="🔗" />
           </>
         )}
       </div>
