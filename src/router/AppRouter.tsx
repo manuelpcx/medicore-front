@@ -15,6 +15,8 @@ const ExamenesPage   = lazy(() => import('../pages/ExamenesPage'));
 const AlergiasPage   = lazy(() => import('../pages/AlergiasPage'));
 const VacunasPage    = lazy(() => import('../pages/VacunasPage'));
 const PerfilPage     = lazy(() => import('../pages/PerfilPage'));
+const TermsPage      = lazy(() => import('../pages/legal/TermsPage'));
+const PrivacyPage    = lazy(() => import('../pages/legal/PrivacyPage'));
 const NotFoundPage   = lazy(() => import('../pages/NotFoundPage'));
 
 const Loader = () => (
@@ -44,6 +46,10 @@ export function AppRouter() {
               <Route path="/perfil" element={<PerfilPage />} />
             </Route>
           </Route>
+
+          {/* Páginas legales — públicas, accesibles con o sin sesión */}
+          <Route path="/legal/terms" element={<TermsPage />} />
+          <Route path="/legal/privacy" element={<PrivacyPage />} />
 
           {/* Rutas públicas para médicos — sin autenticación */}
           <Route path="/doctor" element={<DoctorEntryPage />} />
