@@ -126,7 +126,7 @@ export default function ExamenesPage() {
       >
         <form id="exam-form" onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <Input label="Nombre del examen" placeholder="Hemograma completo" error={errors.nombre?.message} {...register('nombre')} />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <Input label="Fecha" type="date" error={errors.fecha?.message} {...register('fecha')} />
             <Select
               label="Resultado"

@@ -86,7 +86,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Main grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20 }}>
+      <div className="dash-columns" style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20 }}>
         {/* Left column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 

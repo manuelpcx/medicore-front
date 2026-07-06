@@ -110,7 +110,7 @@ function HistoryForm({
   return (
     <form id={id} onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       {/* Campos base */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <Input label="Fecha" type="date" error={errors.fecha?.message} {...register('fecha')} />
         <Select label="Tipo" options={TIPOS} {...register('tipo')} />
       </div>
@@ -129,7 +129,7 @@ function HistoryForm({
           Próximo control
         </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+        <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
           <Input
             label="¿Cuándo es tu próxima cita?"
             type="date"

@@ -81,7 +81,7 @@ export default function RegisterPage() {
             {...register('password')}
           />
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <Input
               label="Fecha de nacimiento"
               type="date"

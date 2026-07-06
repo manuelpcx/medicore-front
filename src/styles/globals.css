@@ -79,3 +79,36 @@ input, textarea, select {
   from { stroke-dashoffset: 0; }
   to   { stroke-dashoffset: 283; }
 }
+
+/* ── Responsive / mobile ────────────────────────────────────────────────── */
+/* Elements that only exist on mobile are hidden by default (desktop). */
+.app-topbar { display: none; }
+.app-overlay { display: none; }
+
+@media (max-width: 768px) {
+  /* Content takes full width; sidebar becomes an off-canvas drawer. */
+  .app-main {
+    margin-left: 0 !important;
+    max-width: 100% !important;
+    padding: 72px 16px 28px !important;
+  }
+
+  .app-sidebar {
+    transform: translateX(-100%);
+    width: var(--sidebar-w) !important;
+    box-shadow: var(--shadow-lg);
+    transition: transform 0.25s ease !important;
+  }
+  .app-sidebar.is-open { transform: translateX(0); }
+
+  /* Desktop-only collapse toggle is meaningless on mobile. */
+  .sidebar-collapse { display: none !important; }
+
+  /* Mobile top bar + drawer backdrop. */
+  .app-topbar { display: flex !important; }
+  .app-overlay.is-open { display: block; }
+
+  /* Multi-column layouts stack on small screens. */
+  .grid-2 { grid-template-columns: 1fr !important; }
+  .dash-columns { grid-template-columns: 1fr !important; }
+}

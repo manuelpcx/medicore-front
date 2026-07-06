@@ -86,14 +86,14 @@ function MedForm({ id, onSubmit, register, control, errors }: {
       {/* Campos base */}
       <Input label="Nombre del medicamento" placeholder="Metformina"
         error={errors.nombre?.message} {...register('nombre')} />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <Input label="Dosis" placeholder="500mg" error={errors.dosis?.message} {...register('dosis')} />
         <Input label="Frecuencia" placeholder="Cada 12 horas"
           error={errors.frecuencia?.message} {...register('frecuencia')} />
       </div>
       <Input label="Horario descriptivo" placeholder="Mañana y noche" {...register('horario')} />
       <Input label="Médico recetante" placeholder="Dr. López" {...register('medico_recetante')} />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <Input label="Fecha inicio" type="date" {...register('fecha_inicio')} />
         <Input label="Fecha fin" type="date" {...register('fecha_fin')} />
       </div>

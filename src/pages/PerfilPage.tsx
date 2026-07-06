@@ -146,7 +146,7 @@ export default function PerfilPage() {
         <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {tab === 'personal' && (
               <>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                   <Input label="Teléfono" placeholder="+52 55 1234 5678" {...register('telefono')} />
                 </div>
                 <Input label="Dirección" placeholder="Calle, Colonia, Ciudad" {...register('direccion')} />
@@ -155,11 +155,11 @@ export default function PerfilPage() {
 
             {tab === 'vitales' && (
               <>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                   <Input label="Peso (kg)" type="number" step="0.1" placeholder="75.5" {...register('peso')} />
                   <Input label="Altura (m)" type="number" step="0.01" placeholder="1.75" {...register('altura')} />
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                   <Input label="Presión arterial" placeholder="120/80" {...register('presion_arterial')} />
                   <Input label="Frecuencia cardiaca (bpm)" type="number" placeholder="72" {...register('frecuencia_cardiaca')} />
                 </div>

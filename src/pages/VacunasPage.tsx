@@ -104,7 +104,7 @@ export default function VacunasPage() {
       >
         <form id="vaccine-form" onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <Input label="Nombre de la vacuna" placeholder="COVID-19 Pfizer" error={errors.nombre?.message} {...register('nombre')} />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <Input label="Fecha de aplicación" type="date" error={errors.fecha?.message} {...register('fecha')} />
             <Input label="Lote" placeholder="AB1234" {...register('lote')} />
           </div>

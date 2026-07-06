@@ -15,7 +15,12 @@ const NAV = [
   { to: '/perfil', icon: '👤', label: 'Perfil' },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+}
+
+export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   const { user, clearAuth } = useAuthStore();
   const navigate = useNavigate();
   const [qrOpen, setQrOpen] = useState(false);
@@ -30,7 +35,7 @@ export function Sidebar() {
 
   return (
     <>
-      <aside style={{
+      <aside className={`app-sidebar${mobileOpen ? ' is-open' : ''}`} style={{
         width: collapsed ? 64 : 'var(--sidebar-w)',
         background: 'var(--surface)',
         borderRight: '1px solid var(--border)',
@@ -56,6 +61,7 @@ export function Sidebar() {
             <NavLink
               key={item.to}
               to={item.to}
+              onClick={onMobileClose}
               title={collapsed ? item.label : undefined}
               style={({ isActive }) => ({
                 display: 'flex', alignItems: 'center',
@@ -124,6 +130,7 @@ export function Sidebar() {
 
         {/* Collapse toggle */}
         <button
+          className="sidebar-collapse"
           onClick={() => setCollapsed(!collapsed)}
           style={{
             position: 'absolute', top: 24, right: collapsed ? -12 : -12,

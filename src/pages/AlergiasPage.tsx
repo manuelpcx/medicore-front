@@ -94,7 +94,7 @@ export default function AlergiasPage() {
       >
         <form id="allergy-form" onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <Input label="Nombre de la alergia" placeholder="Penicilina" error={errors.nombre?.message} {...register('nombre')} />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <Select label="Severidad" options={[
               { value: 'leve', label: 'Leve' },
               { value: 'moderada', label: 'Moderada' },
