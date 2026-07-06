@@ -52,7 +52,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
             color: '#fff', fontFamily: 'DM Serif Display, serif', fontSize: 16, flexShrink: 0,
             marginLeft: collapsed ? 'auto' : 0, marginRight: collapsed ? 'auto' : 0,
           }}>M</div>
-          {!collapsed && <span className="serif" style={{ fontSize: 20, color: 'var(--accent)' }}>Medicore</span>}
+          {!collapsed && <span className="serif" style={{ fontSize: 20, color: 'var(--accent)' }}>MediHistory</span>}
         </div>
 
         {/* Nav */}

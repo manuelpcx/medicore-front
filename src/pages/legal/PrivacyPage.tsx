@@ -12,7 +12,7 @@ export default function PrivacyPage() {
   return (
     <LegalLayout title="Política de Privacidad" updated="6 de julio de 2026">
       <p>
-        En Medicore valoramos y protegemos tu privacidad. Esta Política de Privacidad describe
+        En MediHistory valoramos y protegemos tu privacidad. Esta Política de Privacidad describe
         cómo [Nombre de la empresa] (el «Responsable») recopila, utiliza, almacena y protege
         tus datos personales, incluidos tus datos sensibles de salud, en cumplimiento de la
         Ley N° 19.628 sobre Protección de la Vida Privada y la Ley N° 21.719.

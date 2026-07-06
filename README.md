@@ -1,6 +1,6 @@
-# Medicore Frontend
+# MediHistory Frontend
 
-Interfaz web para **Medicore** — historial médico personal centralizado.
+Interfaz web para **MediHistory** — historial médico personal centralizado.
 
 ## Stack
 
@@ -29,7 +29,7 @@ npm run dev
 # → http://localhost:5173
 ```
 
-> Asegúrate de que el backend Medicore esté corriendo en `http://localhost:3000`
+> Asegúrate de que el backend MediHistory esté corriendo en `http://localhost:3000`
 
 ---
 

@@ -24,7 +24,7 @@ export function AppLayout() {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: '#fff', fontFamily: 'DM Serif Display, serif', fontSize: 15,
           }}>M</div>
-          <span className="serif" style={{ fontSize: 18, color: 'var(--accent)' }}>Medicore</span>
+          <span className="serif" style={{ fontSize: 18, color: 'var(--accent)' }}>MediHistory</span>
         </div>
       </header>
 

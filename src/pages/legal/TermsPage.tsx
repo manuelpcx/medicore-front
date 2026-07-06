@@ -11,8 +11,8 @@ export default function TermsPage() {
   return (
     <LegalLayout title="Términos de Uso" updated="6 de julio de 2026">
       <p>
-        Bienvenido a Medicore. Estos Términos de Uso (los «Términos») regulan el acceso y
-        uso de la aplicación Medicore (la «Plataforma»), operada por [Nombre de la empresa],
+        Bienvenido a MediHistory. Estos Términos de Uso (los «Términos») regulan el acceso y
+        uso de la aplicación MediHistory (la «Plataforma»), operada por [Nombre de la empresa],
         RUT [__.___.___-_], con domicilio en [dirección] (el «Titular»). Al registrarte o
         utilizar la Plataforma, aceptas estos Términos en su totalidad.
       </p>
@@ -27,13 +27,13 @@ export default function TermsPage() {
 
       <LegalSection heading="2. Descripción del servicio">
         <p>
-          Medicore es una herramienta que permite a las personas registrar, organizar y
+          MediHistory es una herramienta que permite a las personas registrar, organizar y
           consultar su información médica personal (historial clínico, medicamentos,
           exámenes, alergias y vacunas), así como compartirla de forma voluntaria con
           profesionales de la salud mediante códigos de acceso.
         </p>
         <p>
-          <strong>Medicore no presta servicios médicos.</strong> La Plataforma es un registro
+          <strong>MediHistory no presta servicios médicos.</strong> La Plataforma es un registro
           personal de información y no sustituye la consulta, diagnóstico o tratamiento de un
           profesional de la salud. Ante cualquier urgencia o duda médica, acude a un
           profesional o a un servicio de emergencia.

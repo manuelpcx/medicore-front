@@ -109,13 +109,32 @@ export function QRModal({ open, onClose }: Props) {
             </div>
           </div>
 
-          {/* Info */}
+          {/* Help: cómo el médico ve el resumen */}
           <div style={{
-            background: 'var(--surface2)', borderRadius: 10, padding: '12px 16px',
-            fontSize: 13, color: 'var(--text2)', textAlign: 'center', lineHeight: 1.5,
+            width: '100%', background: 'var(--accent2)', border: '1px solid #c0e0d8',
+            borderRadius: 10, padding: '14px 16px', fontSize: 13, color: 'var(--accent3)', lineHeight: 1.5,
           }}>
-            ℹ️ El médico ingresa el código en su terminal.<br />
-            El acceso expira automáticamente o puedes revocarlo ahora.
+            <div style={{ fontWeight: 600, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>💡</span> Cómo tu médico ve tu historial
+            </div>
+            <ol style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <li>
+                Pídele que ingrese a{' '}
+                <a
+                  href="https://medihistory.vercel.app/doctor"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ fontWeight: 600, color: 'var(--accent)', textDecoration: 'underline', wordBreak: 'break-all' }}
+                >
+                  medihistory.vercel.app/doctor
+                </a>
+              </li>
+              <li>Ahí debe escribir el código que ves arriba.</li>
+              <li>Al confirmarlo, verá el resumen de tu historial médico.</li>
+            </ol>
+            <p style={{ marginTop: 10, fontSize: 12, color: 'var(--text2)' }}>
+              El acceso expira automáticamente cuando termina el tiempo, o puedes revocarlo ahora.
+            </p>
           </div>
 
           {/* Revoke */}

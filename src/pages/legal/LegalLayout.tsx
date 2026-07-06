@@ -25,7 +25,7 @@ export function LegalLayout({ title, updated, children }: LegalLayoutProps) {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: '#fff', fontFamily: 'DM Serif Display, serif', fontSize: 16,
             }}>M</div>
-            <span className="serif" style={{ fontSize: 20, color: 'var(--accent)' }}>Medicore</span>
+            <span className="serif" style={{ fontSize: 20, color: 'var(--accent)' }}>MediHistory</span>
           </div>
           <button
             onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}
