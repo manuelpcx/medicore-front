@@ -4,6 +4,8 @@ export interface ApiResponse<T> {
   statusCode: number;
 }
 
+export type UserRole = 'patient' | 'admin';
+
 export interface User {
   id: string;
   email: string;
@@ -12,6 +14,8 @@ export interface User {
   tipo_sangre?: string;
   activo: boolean;
   created_at: string;
+  /** Rol del usuario. Viene del JWT decodificado o de la respuesta de /auth/login. */
+  role?: UserRole;
 }
 
 export interface VitalSigns {
@@ -205,4 +209,57 @@ export interface NotificationPreferences {
   daily_meds_enabled: boolean;
   single_med_enabled: boolean;
   appointments_enabled: boolean;
+}
+
+// ── Admin ─────────────────────────────────────────────────────────────────
+export interface AdminStats {
+  users: {
+    total: number;
+    new_this_week: number;
+    new_this_month: number;
+    active_last_7_days: number;
+  };
+  /** Registros por día, últimos 30 días. */
+  registrations_by_day: { date: string; count: number }[];
+  usage: {
+    total_histories: number;
+    total_medications: number;
+    total_exams: number;
+    total_access_codes: number;
+  };
+}
+
+export interface AdminUserRow {
+  id: string;
+  nombre: string;
+  email: string;
+  created_at: string;
+  last_login_at?: string | null;
+  history_count: number;
+  exam_count: number;
+}
+
+export interface AdminUsersPage {
+  users: AdminUserRow[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface AdminUsersParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+/** Detalle de un usuario — solo conteos y metadatos, nunca contenido médico. */
+export interface AdminUserDetail extends AdminUserRow {
+  fecha_nacimiento?: string;
+  tipo_sangre?: string;
+  activo: boolean;
+  role?: UserRole;
+  medication_count: number;
+  allergy_count: number;
+  vaccine_count: number;
+  access_code_count: number;
 }

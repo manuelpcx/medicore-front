@@ -1,6 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ProtectedRoute, PublicOnlyRoute } from './ProtectedRoute';
+import { ProtectedRoute, PublicOnlyRoute, AdminRoute } from './ProtectedRoute';
 import { AppLayout } from '../components/layout/AppLayout';
 import { ListSkeleton } from '../components/ui/Skeleton';
 
@@ -15,6 +15,7 @@ const ExamenesPage   = lazy(() => import('../pages/ExamenesPage'));
 const AlergiasPage   = lazy(() => import('../pages/AlergiasPage'));
 const VacunasPage    = lazy(() => import('../pages/VacunasPage'));
 const PerfilPage     = lazy(() => import('../pages/PerfilPage'));
+const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage'));
 const TermsPage      = lazy(() => import('../pages/legal/TermsPage'));
 const PrivacyPage    = lazy(() => import('../pages/legal/PrivacyPage'));
 const NotFoundPage   = lazy(() => import('../pages/NotFoundPage'));
@@ -45,6 +46,11 @@ export function AppRouter() {
               <Route path="/vacunas" element={<VacunasPage />} />
               <Route path="/perfil" element={<PerfilPage />} />
             </Route>
+          </Route>
+
+          {/* Panel de administración — requiere login Y role === 'admin' */}
+          <Route element={<AdminRoute />}>
+            <Route path="/admin" element={<AdminDashboardPage />} />
           </Route>
 
           {/* Páginas legales — públicas, accesibles con o sin sesión */}
