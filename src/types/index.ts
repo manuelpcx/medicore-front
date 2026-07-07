@@ -215,21 +215,18 @@ export interface NotificationPreferences {
 }
 
 // ── Admin ─────────────────────────────────────────────────────────────────
+/** Forma plana que devuelve el backend en GET /admin/stats. */
 export interface AdminStats {
-  users: {
-    total: number;
-    new_this_week: number;
-    new_this_month: number;
-    active_last_7_days: number;
-  };
+  total_users: number;
+  users_this_week: number;
+  users_this_month: number;
+  active_users_last_7_days: number;
+  total_medical_history: number;
+  total_medications: number;
+  total_exams: number;
+  total_access_codes_generated: number;
   /** Registros por día, últimos 30 días. */
-  registrations_by_day: { date: string; count: number }[];
-  usage: {
-    total_histories: number;
-    total_medications: number;
-    total_exams: number;
-    total_access_codes: number;
-  };
+  signups_by_day: { date: string; count: number }[];
 }
 
 export interface AdminUserRow {

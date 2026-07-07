@@ -32,7 +32,7 @@ export default function AdminDashboardPage() {
   const total = usersPage?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const chartData = (stats?.registrations_by_day ?? []).map((d) => ({
+  const chartData = (stats?.signups_by_day ?? []).map((d) => ({
     ...d,
     label: fDateShort(d.date).slice(0, 5), // dd/MM
   }));
@@ -50,10 +50,10 @@ export default function AdminDashboardPage() {
           </Card>
         ) : (
           <>
-            <MetricCard label="Total usuarios" value={stats?.users?.total} icon="👥" />
-            <MetricCard label="Nuevos esta semana" value={stats?.users?.new_this_week} icon="📈" />
-            <MetricCard label="Nuevos este mes" value={stats?.users?.new_this_month} icon="🗓️" />
-            <MetricCard label="Activos últimos 7 días" value={stats?.users?.active_last_7_days} icon="⚡" />
+            <MetricCard label="Total usuarios" value={stats?.total_users} icon="👥" />
+            <MetricCard label="Nuevos esta semana" value={stats?.users_this_week} icon="📈" />
+            <MetricCard label="Nuevos este mes" value={stats?.users_this_month} icon="🗓️" />
+            <MetricCard label="Activos últimos 7 días" value={stats?.active_users_last_7_days} icon="⚡" />
           </>
         )}
       </div>
@@ -181,10 +181,10 @@ export default function AdminDashboardPage() {
           Array.from({ length: 4 }).map((_, i) => <Card key={i}><Skeleton height={48} /></Card>)
         ) : (
           <>
-            <MetricCard label="Historiales clínicos" value={stats?.usage?.total_histories} icon="📋" />
-            <MetricCard label="Medicamentos registrados" value={stats?.usage?.total_medications} icon="💊" />
-            <MetricCard label="Exámenes subidos" value={stats?.usage?.total_exams} icon="🔬" />
-            <MetricCard label="Códigos QR generados" value={stats?.usage?.total_access_codes} icon="🔗" />
+            <MetricCard label="Historiales clínicos" value={stats?.total_medical_history} icon="📋" />
+            <MetricCard label="Medicamentos registrados" value={stats?.total_medications} icon="💊" />
+            <MetricCard label="Exámenes subidos" value={stats?.total_exams} icon="🔬" />
+            <MetricCard label="Códigos QR generados" value={stats?.total_access_codes_generated} icon="🔗" />
           </>
         )}
       </div>
