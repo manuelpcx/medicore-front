@@ -25,7 +25,7 @@ export default function AdminDashboardPage() {
     return () => clearTimeout(t);
   }, [search]);
 
-  const { data: usersPage, isLoading: loadingUsers, isFetching: fetchingUsers } =
+  const { data: usersPage, isLoading: loadingUsers, isFetching: fetchingUsers, isError: usersError } =
     useAdminUsers({ page, limit: PAGE_SIZE, search: debounced || undefined });
 
   const users = usersPage?.users ?? [];
@@ -129,6 +129,16 @@ export default function AdminDashboardPage() {
                     <td colSpan={6} style={{ padding: '12px 16px' }}><Skeleton height={18} /></td>
                   </tr>
                 ))
+              ) : usersError ? (
+                <tr>
+                  <td colSpan={6} style={{ padding: 32, textAlign: 'center', color: 'var(--text2)' }}>
+                    <div style={{ fontSize: 26, marginBottom: 8 }}>🚧</div>
+                    El listado de usuarios aún no está disponible.
+                    <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4 }}>
+                      Falta implementar el endpoint <code>GET /admin/users</code> en el backend.
+                    </div>
+                  </td>
+                </tr>
               ) : users.length === 0 ? (
                 <tr>
                   <td colSpan={6} style={{ padding: 32, textAlign: 'center', color: 'var(--text3)' }}>

@@ -5,6 +5,13 @@ import type { AdminUsersParams } from '../types';
 
 const isAdmin = () => useAuthStore.getState().user?.role === 'admin';
 
+/** No reintentar en errores del cliente (404, 403, etc.); solo en errores de red/5xx. */
+const retryNotClientError = (count: number, err: unknown) => {
+  const status = (err as any)?.response?.status;
+  if (typeof status === 'number' && status >= 400 && status < 500) return false;
+  return count < 2;
+};
+
 export function useAdminStats() {
   const enabled = useAuthStore((s) => s.user?.role === 'admin');
   return useQuery({
@@ -23,6 +30,7 @@ export function useAdminUsers(params: AdminUsersParams) {
     enabled,
     placeholderData: keepPreviousData,
     staleTime: 1000 * 30,
+    retry: retryNotClientError,
   });
 }
 
