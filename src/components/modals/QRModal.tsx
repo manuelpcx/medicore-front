@@ -121,12 +121,12 @@ export function QRModal({ open, onClose }: Props) {
               <li>
                 Pídele que ingrese a{' '}
                 <a
-                  href="https://medi-history.org/doctor"
+                  href="https://medi-history.com/doctor"
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{ fontWeight: 600, color: 'var(--accent)', textDecoration: 'underline', wordBreak: 'break-all' }}
                 >
-                  medi-history.org/doctor
+                  medi-history.com/doctor
                 </a>
               </li>
               <li>Ahí debe escribir el código que ves arriba.</li>
