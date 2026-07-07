@@ -50,22 +50,8 @@ export function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
 
       <div style={{ flex: 1, fontSize: 18, fontWeight: 800, color: 'var(--text)' }}>{title}</div>
 
-      {/* Buscador */}
-      <div className="topbar-search" style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        padding: '9px 14px', width: 260,
-        background: 'var(--surface2)', borderRadius: 'var(--radius-btn)',
-        color: 'var(--text3)',
-      }}>
-        <Icon name="search" size={17} strokeWidth={1.8} />
-        <input
-          placeholder="Buscar…"
-          style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: 14, color: 'var(--text)' }}
-        />
-      </div>
-
       {/* Notificaciones */}
-      <button style={{
+      {/* <button style={{
         position: 'relative', width: 44, height: 44, borderRadius: 12,
         background: 'var(--surface2)', border: 'none',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -73,7 +59,7 @@ export function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
       }}>
         <Icon name="bell" size={19} strokeWidth={1.8} />
         <span style={{ position: 'absolute', top: 10, right: 11, width: 7, height: 7, borderRadius: '50%', background: 'var(--red)', border: '1.5px solid var(--surface)' }} />
-      </button>
+      </button> */}
 
       {/* Perfil */}
       <div style={{
