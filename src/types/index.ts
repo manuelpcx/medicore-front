@@ -69,9 +69,11 @@ export interface Medication {
   frecuencia: string;
   horario?: string;
   estado: EstadoMedicamento;
+  /** Tratamiento sin fecha de término definida. Independiente de `estado`. */
+  permanente: boolean;
   medico_recetante?: string;
   fecha_inicio?: string;
-  fecha_fin?: string;
+  fecha_fin?: string | null;
   horario_notificacion?: string | null;
   notificacion_activa: boolean;
   created_at: string;
@@ -169,9 +171,10 @@ export interface CreateMedicationDto {
   frecuencia: string;
   horario?: string;
   estado?: EstadoMedicamento;
+  permanente?: boolean;
   medico_recetante?: string;
   fecha_inicio?: string;
-  fecha_fin?: string;
+  fecha_fin?: string | null;
   horario_notificacion?: string | null;
   notificacion_activa?: boolean;
 }

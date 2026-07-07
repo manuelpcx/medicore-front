@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useMedications, useCreateMedication, useUpdateMedication, useDeleteMedication } from '../hooks/useMedications';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Card } from '../components/ui/Card';
@@ -19,6 +19,7 @@ const schema = z.object({
   frecuencia: z.string().min(1, 'Requerido'),
   horario: z.string().optional(),
   estado: z.enum(['activo', 'finalizado']).default('activo'),
+  permanente: z.boolean().default(false),
   medico_recetante: z.string().optional(),
   fecha_inicio: z.string().optional(),
   fecha_fin: z.string().optional(),
@@ -45,6 +46,7 @@ function MedCard({ med, onEdit, onDelete, onToggle }: {
             <Badge variant={isActive ? 'success' : 'default'}>
               {isActive ? 'Activo' : 'Finalizado'}
             </Badge>
+            {med.permanente && <Badge variant="info">Permanente</Badge>}
           </div>
           <div style={{ fontSize: 13, color: 'var(--text2)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <span>💉 {med.dosis}</span>
@@ -58,7 +60,9 @@ function MedCard({ med, onEdit, onDelete, onToggle }: {
           )}
           <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4, display: 'flex', gap: 10 }}>
             {med.fecha_inicio && <span>Inicio: {fDate(med.fecha_inicio)}</span>}
-            {med.fecha_fin && <span>Fin: {fDate(med.fecha_fin)}</span>}
+            {med.permanente
+              ? <span>Sin fecha de término</span>
+              : med.fecha_fin && <span>Fin: {fDate(med.fecha_fin)}</span>}
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -81,6 +85,8 @@ function MedForm({ id, onSubmit, register, control, errors }: {
   control: ReturnType<typeof useForm<Form>>['control'];
   errors: ReturnType<typeof useForm<Form>>['formState']['errors'];
 }) {
+  const permanente = useWatch({ control, name: 'permanente' });
+
   return (
     <form id={id} onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       {/* Campos base */}
@@ -93,9 +99,24 @@ function MedForm({ id, onSubmit, register, control, errors }: {
       </div>
       <Input label="Horario descriptivo" placeholder="Mañana y noche" {...register('horario')} />
       <Input label="Médico recetante" placeholder="Dr. López" {...register('medico_recetante')} />
+
+      {/* Tratamiento permanente */}
+      <label style={{
+        display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
+        background: 'var(--surface2)', borderRadius: 8, padding: '10px 12px',
+      }}>
+        <input type="checkbox" {...register('permanente')} style={{ width: 16, height: 16, cursor: 'pointer', accentColor: 'var(--accent)' }} />
+        <span style={{ fontSize: 14, color: 'var(--text)' }}>
+          Tratamiento permanente
+          <span style={{ display: 'block', fontSize: 12, color: 'var(--text3)' }}>
+            Sin fecha de término definida
+          </span>
+        </span>
+      </label>
+
       <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <Input label="Fecha inicio" type="date" {...register('fecha_inicio')} />
-        <Input label="Fecha fin" type="date" {...register('fecha_fin')} />
+        {!permanente && <Input label="Fecha fin" type="date" {...register('fecha_fin')} />}
       </div>
       <Select
         label="Estado"
@@ -121,12 +142,12 @@ export default function MedicamentosPage() {
 
   const { register, control, handleSubmit, reset, formState: { errors } } = useForm<Form>({
     resolver: zodResolver(schema),
-    defaultValues: { estado: 'activo', notificacion_activa: false },
+    defaultValues: { estado: 'activo', permanente: false, notificacion_activa: false },
   });
 
   const openCreate = () => {
     setEditing(null);
-    reset({ estado: 'activo', notificacion_activa: false, horario_notificacion: null });
+    reset({ estado: 'activo', permanente: false, notificacion_activa: false, horario_notificacion: null });
     setModalOpen(true);
   };
 
@@ -135,7 +156,8 @@ export default function MedicamentosPage() {
     reset({
       ...m,
       fecha_inicio: m.fecha_inicio?.slice(0, 10),
-      fecha_fin: m.fecha_fin?.slice(0, 10),
+      fecha_fin: m.fecha_fin?.slice(0, 10) ?? undefined,
+      permanente: m.permanente ?? false,
       notificacion_activa: m.notificacion_activa ?? true,
       horario_notificacion: m.horario_notificacion ?? null,
     });
@@ -145,6 +167,8 @@ export default function MedicamentosPage() {
   const onSubmit = async (values: Form) => {
     const payload = {
       ...values,
+      // Un permanente no lleva fecha de término
+      fecha_fin: values.permanente ? null : (values.fecha_fin || null),
       // Si el toggle está desactivado, limpiar la hora
       horario_notificacion: values.notificacion_activa ? (values.horario_notificacion ?? null) : null,
     };
