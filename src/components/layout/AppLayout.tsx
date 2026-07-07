@@ -1,53 +1,41 @@
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
+import { TopBar } from './TopBar';
+
+/*
+  Shell "Clínico Moderno" (1b): barra lateral fija + barra superior sticky.
+  El contenido de cada página se renderiza en <Outlet />.
+  En móvil la sidebar se vuelve un drawer con overlay.
+*/
 
 export function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
-      {/* Mobile top bar (hidden on desktop via CSS) */}
-      <header className="app-topbar" style={{
-        position: 'fixed', top: 0, left: 0, right: 0, height: 56, zIndex: 90,
-        background: 'var(--surface)', borderBottom: '1px solid var(--border)',
-        alignItems: 'center', gap: 12, padding: '0 16px',
-      }}>
-        <button
-          onClick={() => setMobileOpen(true)}
-          aria-label="Abrir menú"
-          style={{ background: 'none', border: 'none', fontSize: 22, color: 'var(--text)', lineHeight: 1, padding: 4 }}
-        >☰</button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{
-            width: 28, height: 28, background: 'var(--accent)', borderRadius: 7,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontFamily: 'DM Serif Display, serif', fontSize: 15,
-          }}>M</div>
-          <span className="serif" style={{ fontSize: 18, color: 'var(--accent)' }}>MediHistory</span>
-        </div>
-      </header>
+      <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
 
-      {/* Drawer backdrop (mobile only) */}
+      {/* Backdrop del drawer (solo móvil) */}
       <div
         className={`app-overlay${mobileOpen ? ' is-open' : ''}`}
         onClick={() => setMobileOpen(false)}
-        style={{ position: 'fixed', inset: 0, background: 'rgba(26,25,22,0.4)', zIndex: 95 }}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(15,27,45,0.4)', zIndex: 95 }}
       />
 
-      <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
-
-      <main className="app-main" style={{
+      <div className="app-shell-main" style={{
         flex: 1,
         marginLeft: 'var(--sidebar-w)',
-        padding: '32px 36px',
+        minWidth: 0,
+        display: 'flex',
+        flexDirection: 'column',
         minHeight: '100vh',
-        maxWidth: 'calc(100vw - var(--sidebar-w))',
-        transition: 'margin-left 0.2s ease',
-        overflowX: 'hidden',
       }}>
-        <Outlet />
-      </main>
+        <TopBar onMenuClick={() => setMobileOpen(true)} />
+        <main className="app-shell-content" style={{ flex: 1, padding: '28px', overflowX: 'hidden' }}>
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

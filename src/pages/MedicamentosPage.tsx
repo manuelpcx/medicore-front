@@ -10,6 +10,7 @@ import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { ListSkeleton } from '../components/ui/Skeleton';
+import { Icon } from '../components/ui/Icon';
 import { fDate } from '../utils/format';
 import type { Medication } from '../types';
 
@@ -41,21 +42,27 @@ function MedCard({ med, onEdit, onDelete, onToggle }: {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 18 }}>💊</span>
+            <span style={{ width: 32, height: 32, borderRadius: 9, background: 'var(--purple2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Icon name="pill" size={17} color="var(--purple)" />
+            </span>
             <span style={{ fontWeight: 600, fontSize: 15 }}>{med.nombre}</span>
             <Badge variant={isActive ? 'success' : 'default'}>
               {isActive ? 'Activo' : 'Finalizado'}
             </Badge>
             {med.permanente && <Badge variant="info">Permanente</Badge>}
           </div>
-          <div style={{ fontSize: 13, color: 'var(--text2)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <span>💉 {med.dosis}</span>
-            <span>🔄 {med.frecuencia}</span>
-            {med.horario && <span>🕐 {med.horario}</span>}
+          <div style={{ fontSize: 13, color: 'var(--text2)', display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+            <span>{med.dosis}</span>
+            <span>{med.frecuencia}</span>
+            {med.horario && (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <Icon name="clock" size={13} strokeWidth={1.8} /> {med.horario}
+              </span>
+            )}
           </div>
           {med.medico_recetante && (
-            <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4 }}>
-              👨‍⚕️ {med.medico_recetante}
+            <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 5 }}>
+              <Icon name="user" size={13} strokeWidth={1.8} /> {med.medico_recetante}
             </div>
           )}
           <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4, display: 'flex', gap: 10 }}>
@@ -217,7 +224,9 @@ export default function MedicamentosPage() {
 
       {isLoading ? <ListSkeleton count={3} /> : filtered.length === 0 ? (
         <Card style={{ textAlign: 'center', padding: 48 }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>💊</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+            <Icon name="pill" size={40} color="var(--text3)" />
+          </div>
           <p style={{ color: 'var(--text2)' }}>
             {tab === 'activo' ? 'No hay medicamentos activos' : 'No hay medicamentos anteriores'}
           </p>

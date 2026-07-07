@@ -4,15 +4,22 @@ import { useAuthStore } from '../../store/auth.store';
 import { authApi } from '../../api/auth.api';
 import { toast } from '../../store/toast.store';
 import { QRModal } from '../modals/QRModal';
+import { Icon, type IconName } from '../ui/Icon';
 
-const NAV = [
-  { to: '/dashboard', icon: '⊞', label: 'Inicio' },
-  { to: '/historial', icon: '📋', label: 'Historial' },
-  { to: '/medicamentos', icon: '💊', label: 'Medicamentos' },
-  { to: '/examenes', icon: '🔬', label: 'Exámenes' },
-  { to: '/alergias', icon: '⚠', label: 'Alergias' },
-  { to: '/vacunas', icon: '💉', label: 'Vacunas' },
-  { to: '/perfil', icon: '👤', label: 'Perfil' },
+/*
+  Barra lateral "Clínico Moderno" (1b) — con NOMBRES visibles y texto grande
+  (pensada para adultos mayores). Sin modo colapsado: las etiquetas siempre se ven.
+  En móvil (<=768px) se comporta como drawer deslizable.
+*/
+
+const NAV: { to: string; icon: IconName; label: string }[] = [
+  { to: '/dashboard',    icon: 'home',      label: 'Inicio' },
+  { to: '/historial',    icon: 'clipboard', label: 'Historial' },
+  { to: '/medicamentos', icon: 'pill',      label: 'Medicamentos' },
+  { to: '/examenes',     icon: 'flask',     label: 'Exámenes' },
+  { to: '/alergias',     icon: 'alert',     label: 'Alergias' },
+  { to: '/vacunas',      icon: 'syringe',   label: 'Vacunas' },
+  { to: '/perfil',       icon: 'user',      label: 'Perfil' },
 ];
 
 interface SidebarProps {
@@ -24,10 +31,9 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   const { user, clearAuth } = useAuthStore();
   const navigate = useNavigate();
   const [qrOpen, setQrOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = async () => {
-    try { await authApi.logout(); } catch {}
+    try { await authApi.logout(); } catch { /* noop */ }
     clearAuth();
     navigate('/login');
     toast.info('Sesión cerrada');
@@ -36,112 +42,86 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   return (
     <>
       <aside className={`app-sidebar${mobileOpen ? ' is-open' : ''}`} style={{
-        width: collapsed ? 64 : 'var(--sidebar-w)',
+        width: 'var(--sidebar-w)',
         background: 'var(--surface)',
         borderRight: '1px solid var(--border)',
         display: 'flex', flexDirection: 'column',
         position: 'fixed', left: 0, top: 0, bottom: 0,
-        zIndex: 100, transition: 'width 0.2s ease',
-        overflow: 'hidden',
+        zIndex: 100, padding: '22px 0',
       }}>
         {/* Logo */}
-        <div style={{ padding: collapsed ? '20px 0' : '24px 20px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 32, height: 32, background: 'var(--accent)', borderRadius: 8,
+        <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '0 20px 20px' }}>
+          <span style={{
+            width: 40, height: 40, borderRadius: 12, background: 'var(--accent)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontFamily: 'DM Serif Display, serif', fontSize: 16, flexShrink: 0,
-            marginLeft: collapsed ? 'auto' : 0, marginRight: collapsed ? 'auto' : 0,
-          }}>M</div>
-          {!collapsed && <span className="serif" style={{ fontSize: 20, color: 'var(--accent)' }}>MediHistory</span>}
+            color: '#fff', fontWeight: 800, fontSize: 18, flexShrink: 0,
+          }}>M</span>
+          <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--accent)' }}>MediHistory</span>
         </div>
 
         {/* Nav */}
-        <nav style={{ flex: 1, padding: '12px 0', overflowY: 'auto' }}>
+        <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4, padding: '0 12px', overflowY: 'auto' }}>
           {NAV.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               onClick={onMobileClose}
-              title={collapsed ? item.label : undefined}
               style={({ isActive }) => ({
-                display: 'flex', alignItems: 'center',
-                gap: 10, padding: collapsed ? '10px 0' : '10px 16px',
-                justifyContent: collapsed ? 'center' : 'flex-start',
-                margin: '2px 8px', borderRadius: 8,
+                display: 'flex', alignItems: 'center', gap: 13,
+                padding: '12px 14px', borderRadius: 12,
                 background: isActive ? 'var(--accent2)' : 'transparent',
                 color: isActive ? 'var(--accent)' : 'var(--text2)',
-                fontWeight: isActive ? 500 : 400,
-                fontSize: 14, textDecoration: 'none',
+                fontWeight: isActive ? 700 : 500,
+                fontSize: 15.5, textDecoration: 'none',
                 transition: 'all 0.12s',
               })}
             >
-              <span style={{ fontSize: 16, flexShrink: 0 }}>{item.icon}</span>
-              {!collapsed && item.label}
+              <Icon name={item.icon} size={22} />
+              {item.label}
             </NavLink>
           ))}
         </nav>
 
-        {/* QR Button */}
-        <div style={{ padding: collapsed ? '12px 8px' : '12px 16px', borderTop: '1px solid var(--border)' }}>
+        {/* QR button */}
+        <div style={{ padding: '12px 16px 0' }}>
           <button
             onClick={() => setQrOpen(true)}
-            title="Compartir con médico"
             style={{
-              width: '100%', padding: collapsed ? '10px 0' : '10px 12px',
-              background: 'var(--accent)', color: '#fff',
-              border: 'none', borderRadius: 8, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start',
-              gap: 8, fontSize: 14, fontWeight: 500, fontFamily: 'inherit',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              width: '100%', padding: 13, borderRadius: 'var(--radius-btn)',
+              background: 'var(--accent)', color: '#fff', border: 'none',
+              fontSize: 15.5, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer',
             }}
           >
-            <span style={{ fontSize: 16 }}>🔗</span>
-            {!collapsed && 'Compartir QR'}
+            <Icon name="qr" size={21} />
+            Compartir QR
           </button>
         </div>
 
         {/* User + logout */}
         <div style={{
-          padding: collapsed ? '12px 8px' : '12px 16px',
-          borderTop: '1px solid var(--border)',
-          display: 'flex', alignItems: 'center', gap: 10,
-          justifyContent: collapsed ? 'center' : 'flex-start',
+          display: 'flex', alignItems: 'center', gap: 11,
+          padding: '16px 20px 0', marginTop: 14, borderTop: '1px solid var(--border)',
         }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: '50%', background: 'var(--accent2)',
+          <span style={{
+            width: 38, height: 38, borderRadius: '50%', background: 'var(--accent2)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'var(--accent)', fontWeight: 600, fontSize: 13, flexShrink: 0,
+            color: 'var(--accent)', fontWeight: 700, fontSize: 14, flexShrink: 0, marginTop: 16,
           }}>
             {user?.nombre?.[0]?.toUpperCase() ?? '?'}
-          </div>
-          {!collapsed && (
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {user?.nombre}
-              </div>
-              <button
-                onClick={handleLogout}
-                style={{ fontSize: 12, color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
-              >
-                Cerrar sesión
-              </button>
+          </span>
+          <div style={{ flex: 1, minWidth: 0, marginTop: 16 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {user?.nombre}
             </div>
-          )}
+            <button
+              onClick={handleLogout}
+              style={{ fontSize: 13, color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+            >
+              Cerrar sesión
+            </button>
+          </div>
         </div>
-
-        {/* Collapse toggle */}
-        <button
-          className="sidebar-collapse"
-          onClick={() => setCollapsed(!collapsed)}
-          style={{
-            position: 'absolute', top: 24, right: collapsed ? -12 : -12,
-            width: 24, height: 24, borderRadius: '50%',
-            background: 'var(--surface)', border: '1px solid var(--border)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', fontSize: 10, color: 'var(--text2)', zIndex: 10,
-          }}
-        >
-          {collapsed ? '›' : '‹'}
-        </button>
       </aside>
 
       <QRModal open={qrOpen} onClose={() => setQrOpen(false)} />

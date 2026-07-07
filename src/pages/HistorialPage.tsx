@@ -14,6 +14,7 @@ import { Select } from '../components/ui/Select';
 import { Textarea } from '../components/ui/Textarea';
 import { tipoBadge } from '../components/ui/Badge';
 import { ListSkeleton } from '../components/ui/Skeleton';
+import { Icon } from '../components/ui/Icon';
 import { fDate } from '../utils/format';
 import type { MedicalHistory, TipoConsulta, CreateHistoryDto } from '../types';
 
@@ -69,13 +70,13 @@ function ProximaCitaBadge({ proxima_cita, tipo_proxima_cita }: {
 
   let bg = 'var(--blue2)';
   let color = 'var(--blue)';
-  let label = `📅 Próximo ${tipo_proxima_cita ?? 'control'}: ${fechaLinda.charAt(0).toUpperCase() + fechaLinda.slice(1)}`;
+  let label = `Próximo ${tipo_proxima_cita ?? 'control'}: ${fechaLinda.charAt(0).toUpperCase() + fechaLinda.slice(1)}`;
   let extra = '';
 
   if (past) {
     bg = 'var(--surface2)';
     color = 'var(--text3)';
-    label = `📅 ${tipo_proxima_cita ?? 'Control'}: ${fechaLinda.charAt(0).toUpperCase() + fechaLinda.slice(1)}`;
+    label = `${tipo_proxima_cita ?? 'Control'}: ${fechaLinda.charAt(0).toUpperCase() + fechaLinda.slice(1)}`;
     extra = ' (pasado)';
   } else if (isManana) {
     bg = 'var(--amber2)';
@@ -91,6 +92,7 @@ function ProximaCitaBadge({ proxima_cita, tipo_proxima_cita }: {
       padding: '3px 10px', borderRadius: 20,
       textDecoration: past ? 'line-through' : 'none',
     }}>
+      <Icon name="calendar" size={13} color={color} strokeWidth={1.8} />
       {label}{extra}
     </span>
   );
@@ -246,7 +248,9 @@ export default function HistorialPage() {
         <ListSkeleton count={4} />
       ) : filtered.length === 0 ? (
         <Card style={{ textAlign: 'center', padding: 48 }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>📋</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+            <Icon name="clipboard" size={40} color="var(--text3)" />
+          </div>
           <p style={{ color: 'var(--text2)' }}>No hay consultas que mostrar</p>
         </Card>
       ) : (

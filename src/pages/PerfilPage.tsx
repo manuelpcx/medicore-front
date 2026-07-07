@@ -10,6 +10,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
 import { Skeleton } from '../components/ui/Skeleton';
+import { Icon } from '../components/ui/Icon';
 import { fDate, extractError } from '../utils/format';
 import { authApi } from '../api/auth.api';
 import { toast } from '../store/toast.store';
@@ -197,7 +198,7 @@ export default function PerfilPage() {
               borderBottom: '1px solid #f5c6c2',
               display: 'flex', alignItems: 'center', gap: 8,
             }}>
-              <span style={{ fontSize: 16 }}>⚠</span>
+              <Icon name="alert" size={16} color="var(--red)" />
               <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--red)' }}>
                 Zona de peligro
               </span>

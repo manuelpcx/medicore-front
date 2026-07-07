@@ -10,6 +10,7 @@ import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { severidadBadge } from '../components/ui/Badge';
 import { ListSkeleton } from '../components/ui/Skeleton';
+import { Icon, type IconName } from '../components/ui/Icon';
 
 const schema = z.object({
   nombre: z.string().min(1, 'Requerido'),
@@ -18,8 +19,8 @@ const schema = z.object({
 });
 type Form = z.infer<typeof schema>;
 
-const TIPO_ICON: Record<string, string> = {
-  medicamento: '💊', alimentaria: '🍽️', ambiental: '🌿', otra: '⚠',
+const TIPO_ICON: Record<string, IconName> = {
+  medicamento: 'pill', alimentaria: 'alert', ambiental: 'alert', otra: 'alert',
 };
 
 export default function AlergiasPage() {
@@ -52,14 +53,17 @@ export default function AlergiasPage() {
       </div>
 
       {allergies.filter((a) => a.severidad === 'severa').length > 0 && (
-        <div style={{ background: 'var(--red2)', border: '1px solid #f5c6c2', borderRadius: 10, padding: '12px 16px', marginBottom: 20 }}>
-          🚨 <strong>Alerta severa:</strong> {allergies.filter((a) => a.severidad === 'severa').map((a) => a.nombre).join(', ')}
+        <div style={{ background: 'var(--red2)', border: '1px solid #f5c6c2', borderRadius: 10, padding: '12px 16px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10, color: 'var(--red)' }}>
+          <Icon name="alert" size={18} color="var(--red)" />
+          <span><strong>Alerta severa:</strong> {allergies.filter((a) => a.severidad === 'severa').map((a) => a.nombre).join(', ')}</span>
         </div>
       )}
 
       {isLoading ? <ListSkeleton count={3} /> : allergies.length === 0 ? (
         <Card style={{ textAlign: 'center', padding: 48 }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+            <Icon name="check" size={40} color="var(--accent)" />
+          </div>
           <p style={{ color: 'var(--text2)' }}>Sin alergias registradas</p>
         </Card>
       ) : (
@@ -68,7 +72,9 @@ export default function AlergiasPage() {
             <Card key={a.id}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 22 }}>{TIPO_ICON[a.tipo] ?? '⚠'}</span>
+                  <span style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--accent2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon name={TIPO_ICON[a.tipo] ?? 'alert'} size={19} color="var(--accent)" />
+                  </span>
                   <div>
                     <div style={{ fontWeight: 600, fontSize: 14 }}>{a.nombre}</div>
                     <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2, textTransform: 'capitalize' }}>{a.tipo}</div>

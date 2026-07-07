@@ -9,6 +9,7 @@ import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
 import { ListSkeleton } from '../components/ui/Skeleton';
+import { Icon } from '../components/ui/Icon';
 import { fDate, isSoonDate, daysUntil } from '../utils/format';
 
 const schema = z.object({
@@ -51,15 +52,20 @@ export default function VacunasPage() {
       </div>
 
       {soonVaccines.length > 0 && (
-        <div style={{ background: 'var(--amber2)', border: '1px solid #e8c98d', borderRadius: 10, padding: '12px 16px', marginBottom: 20 }}>
-          ⏰ <strong style={{ color: 'var(--amber)' }}>Próximas dosis en los siguientes 30 días:</strong>
-          {' '}{soonVaccines.map((v) => `${v.nombre} (${daysUntil(v.proxima_dosis)} días)`).join(', ')}
+        <div style={{ background: 'var(--amber2)', border: '1px solid #e8c98d', borderRadius: 10, padding: '12px 16px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Icon name="clock" size={18} color="var(--amber)" />
+          <span>
+            <strong style={{ color: 'var(--amber)' }}>Próximas dosis en los siguientes 30 días:</strong>
+            {' '}{soonVaccines.map((v) => `${v.nombre} (${daysUntil(v.proxima_dosis)} días)`).join(', ')}
+          </span>
         </div>
       )}
 
       {isLoading ? <ListSkeleton count={3} /> : vaccines.length === 0 ? (
         <Card style={{ textAlign: 'center', padding: 48 }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>💉</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+            <Icon name="syringe" size={40} color="var(--text3)" />
+          </div>
           <p style={{ color: 'var(--text2)' }}>Sin vacunas registradas</p>
         </Card>
       ) : (
@@ -70,17 +76,22 @@ export default function VacunasPage() {
               <Card key={v.id} style={{ borderColor: soon ? '#e8c98d' : undefined }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                      <span style={{ fontSize: 18 }}>💉</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                      <span style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--accent2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Icon name="syringe" size={17} color="var(--accent)" />
+                      </span>
                       <span style={{ fontWeight: 600, fontSize: 14 }}>{v.nombre}</span>
                     </div>
-                    <div style={{ fontSize: 12, color: 'var(--text3)', display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      <span>📅 Aplicada: {fDate(v.fecha)}</span>
-                      {v.lote && <span>🔖 Lote: {v.lote}</span>}
-                      {v.institucion && <span>🏥 {v.institucion}</span>}
+                    <div style={{ fontSize: 12, color: 'var(--text3)', display: 'flex', flexDirection: 'column', gap: 3 }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <Icon name="calendar" size={13} strokeWidth={1.8} /> Aplicada: {fDate(v.fecha)}
+                      </span>
+                      {v.lote && <span>Lote: {v.lote}</span>}
+                      {v.institucion && <span>{v.institucion}</span>}
                       {v.proxima_dosis && (
-                        <span style={{ color: soon ? 'var(--amber)' : undefined, fontWeight: soon ? 500 : 400 }}>
-                          {soon && '⚠ '}Próxima dosis: {fDate(v.proxima_dosis)}
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: soon ? 'var(--amber)' : undefined, fontWeight: soon ? 500 : 400 }}>
+                          {soon && <Icon name="alert" size={13} color="var(--amber)" strokeWidth={1.8} />}
+                          Próxima dosis: {fDate(v.proxima_dosis)}
                           {soon && ` (en ${daysUntil(v.proxima_dosis)} días)`}
                         </span>
                       )}

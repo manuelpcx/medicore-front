@@ -11,6 +11,7 @@ import { Select } from '../components/ui/Select';
 import { FileUpload } from '../components/ui/FileUpload';
 import { resultadoBadge } from '../components/ui/Badge';
 import { ListSkeleton } from '../components/ui/Skeleton';
+import { Icon } from '../components/ui/Icon';
 import { fDate } from '../utils/format';
 import { examsApi } from '../api/exams.api';
 import { useAuthStore } from '../store/auth.store';
@@ -65,7 +66,9 @@ export default function ExamenesPage() {
 
       {isLoading ? <ListSkeleton count={3} /> : exams.length === 0 ? (
         <Card style={{ textAlign: 'center', padding: 48 }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>🔬</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+            <Icon name="flask" size={40} color="var(--text3)" />
+          </div>
           <p style={{ color: 'var(--text2)' }}>No hay exámenes registrados</p>
         </Card>
       ) : (
@@ -75,8 +78,8 @@ export default function ExamenesPage() {
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                    <span style={{ fontSize: 20 }}>
-                      {exam.archivo_mimetype === 'application/pdf' ? '📄' : exam.archivo_path ? '🖼️' : '🔬'}
+                    <span style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--blue2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Icon name={exam.archivo_path ? 'file' : 'flask'} size={17} color="var(--blue)" />
                     </span>
                     <span style={{ fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {exam.nombre}
