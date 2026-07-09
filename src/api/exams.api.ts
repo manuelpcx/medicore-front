@@ -16,6 +16,8 @@ export const examsApi = {
 
   delete: (id: string) => api.delete(`/exams/${id}`),
 
-  getFileUrl: (id: string) =>
-    `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/exams/${id}/file`,
+  // Descarga el archivo del examen como Blob a través de axios, de modo que
+  // el interceptor añade el JWT (Authorization) y aplica el auto-refresh.
+  getFileBlob: (id: string) =>
+    api.get(`/exams/${id}/file`, { responseType: 'blob' }).then((r) => r.data as Blob),
 };

@@ -81,6 +81,21 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
             </NavLink>
           ))}
         </nav>
+        
+        {/* Admin dashboard */}
+        <div style={{ padding: '12px 16px 0' }}>
+          <button
+            onClick={() => setQrOpen(true)}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              width: '100%', padding: 13, borderRadius: 'var(--radius-btn)',
+              background: 'var(--accent)', color: '#fff', border: 'none',
+              fontSize: 15.5, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer',
+            }}
+          >
+           Admin dashboard 
+          </button>
+        </div>
 
         {/* QR button */}
         <div style={{ padding: '12px 16px 0' }}>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useExams, useCreateExam, useDeleteExam } from '../hooks/useExams';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,7 +14,6 @@ import { ListSkeleton } from '../components/ui/Skeleton';
 import { Icon } from '../components/ui/Icon';
 import { fDate } from '../utils/format';
 import { examsApi } from '../api/exams.api';
-import { useAuthStore } from '../store/auth.store';
 import type { Exam } from '../types';
 
 const schema = z.object({
@@ -35,7 +34,8 @@ export default function ExamenesPage() {
   const [previewExam, setPreviewExam] = useState<Exam | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
-  const accessToken = useAuthStore((s) => s.accessToken);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<Form>({
     resolver: zodResolver(schema),
@@ -49,9 +49,38 @@ export default function ExamenesPage() {
     setModalOpen(false);
   };
 
-  const getFileUrl = (id: string) => {
-    const base = examsApi.getFileUrl(id);
-    return `${base}?token=${accessToken}`;
+  // Carga la vista previa como blob autenticado (JWT via axios) y crea un
+  // object URL. Se revoca al cambiar/cerrar el examen para no filtrar memoria.
+  useEffect(() => {
+    if (!previewExam) return;
+    let objectUrl: string | null = null;
+    let cancelled = false;
+    setPreviewLoading(true);
+    examsApi.getFileBlob(previewExam.id)
+      .then((blob) => {
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(blob);
+        setPreviewUrl(objectUrl);
+      })
+      .finally(() => { if (!cancelled) setPreviewLoading(false); });
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      setPreviewUrl(null);
+    };
+  }, [previewExam]);
+
+  // Descarga el archivo obteniéndolo autenticado y disparando un <a> temporal.
+  const handleDownload = async (exam: Exam) => {
+    const blob = await examsApi.getFileBlob(exam.id);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = exam.archivo_nombre || exam.nombre;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -100,13 +129,9 @@ export default function ExamenesPage() {
                     <Button size="sm" variant="secondary" onClick={() => setPreviewExam(exam)}>
                       Ver
                     </Button>
-                    <a
-                      href={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/exams/${exam.id}/file`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      <Button size="sm" variant="ghost">Descargar</Button>
-                    </a>
+                    <Button size="sm" variant="ghost" onClick={() => handleDownload(exam)}>
+                      Descargar
+                    </Button>
                   </>
                 )}
                 <Button size="sm" variant="danger" onClick={() => setConfirmDelete(exam.id)} style={{ marginLeft: 'auto' }}>
@@ -157,15 +182,17 @@ export default function ExamenesPage() {
       >
         {previewExam && (
           <div style={{ textAlign: 'center' }}>
-            {previewExam.archivo_mimetype === 'application/pdf' ? (
+            {previewLoading || !previewUrl ? (
+              <p style={{ color: 'var(--text2)', fontSize: 14, padding: 48 }}>Cargando archivo…</p>
+            ) : previewExam.archivo_mimetype === 'application/pdf' ? (
               <iframe
-                src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/exams/${previewExam.id}/file`}
+                src={previewUrl}
                 style={{ width: '100%', height: 500, border: 'none', borderRadius: 8 }}
                 title="PDF"
               />
             ) : (
               <img
-                src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/exams/${previewExam.id}/file`}
+                src={previewUrl}
                 alt={previewExam.nombre}
                 style={{ maxWidth: '100%', maxHeight: 500, borderRadius: 8 }}
               />
