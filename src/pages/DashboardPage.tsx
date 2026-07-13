@@ -10,6 +10,7 @@ import { Card } from '../components/ui/Card';
 import { tipoBadge, severidadBadge } from '../components/ui/Badge';
 import { ListSkeleton, Skeleton } from '../components/ui/Skeleton';
 import { Icon, type IconName } from '../components/ui/Icon';
+import { FamilyInvitationBanner } from '../components/family/FamilyInvitationBanner';
 import { fDate } from '../utils/format';
 
 const TIPO_COLOR: Record<string, { bg: string; col: string }> = {
@@ -60,6 +61,9 @@ export default function DashboardPage() {
 
   return (
     <div style={{ animation: 'fadeIn 0.25s ease' }}>
+      {/* Banner de invitación familiar (aditivo; null si no hay invitaciones) */}
+      <FamilyInvitationBanner />
+
       {/* Hero: saludo + próxima cita */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap',

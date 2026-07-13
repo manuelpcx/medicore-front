@@ -15,6 +15,19 @@ export function PublicOnlyRoute() {
   return <Outlet />;
 }
 
+/**
+ * Requiere sesión iniciada Y `plan === 'family'` (owner). Un usuario logueado
+ * sin ese plan que fuerce `/familia/:memberId` es redirigido a `/familia`
+ * (defensa en profundidad: el backend `FamilyAccessGuard` ya respondería 403).
+ */
+export function FamilyOwnerRoute() {
+  const isAuth = useAuthStore((s) => s.isAuthenticated());
+  const plan = useAuthStore((s) => s.user?.plan);
+  if (!isAuth) return <Navigate to="/login" replace />;
+  if (plan !== 'family') return <Navigate to="/familia" replace />;
+  return <Outlet />;
+}
+
 /** Requiere sesión iniciada Y role === 'admin'. */
 export function AdminRoute() {
   const isAuth = useAuthStore((s) => s.isAuthenticated());

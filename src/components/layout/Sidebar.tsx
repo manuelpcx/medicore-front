@@ -32,6 +32,13 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   const navigate = useNavigate();
   const [qrOpen, setQrOpen] = useState(false);
 
+  // Item "Familia" visible solo si el usuario participa en el plan familiar:
+  // owner (plan === 'family') o miembro aceptado (family_group_id no nulo).
+  const showFamily = user?.plan === 'family' || !!user?.family_group_id;
+  const nav: { to: string; icon: IconName; label: string }[] = showFamily
+    ? [...NAV.slice(0, -1), { to: '/familia', icon: 'heart', label: 'Familia' }, NAV[NAV.length - 1]]
+    : NAV;
+
   const handleLogout = async () => {
     try { await authApi.logout(); } catch { /* noop */ }
     clearAuth();
@@ -61,7 +68,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
 
         {/* Nav */}
         <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4, padding: '0 12px', overflowY: 'auto' }}>
-          {NAV.map((item) => (
+          {nav.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}

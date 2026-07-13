@@ -1,6 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ProtectedRoute, PublicOnlyRoute, AdminRoute } from './ProtectedRoute';
+import { ProtectedRoute, PublicOnlyRoute, AdminRoute, FamilyOwnerRoute } from './ProtectedRoute';
 import { AppLayout } from '../components/layout/AppLayout';
 import { ListSkeleton } from '../components/ui/Skeleton';
 
@@ -15,6 +15,8 @@ const ExamenesPage   = lazy(() => import('../pages/ExamenesPage'));
 const AlergiasPage   = lazy(() => import('../pages/AlergiasPage'));
 const VacunasPage    = lazy(() => import('../pages/VacunasPage'));
 const PerfilPage     = lazy(() => import('../pages/PerfilPage'));
+const FamiliaPage    = lazy(() => import('../pages/FamiliaPage'));
+const FamiliaMemberPage = lazy(() => import('../pages/FamiliaMemberPage'));
 const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage'));
 const TermsPage      = lazy(() => import('../pages/legal/TermsPage'));
 const PrivacyPage    = lazy(() => import('../pages/legal/PrivacyPage'));
@@ -45,6 +47,11 @@ export function AppRouter() {
               <Route path="/alergias" element={<AlergiasPage />} />
               <Route path="/vacunas" element={<VacunasPage />} />
               <Route path="/perfil" element={<PerfilPage />} />
+              <Route path="/familia" element={<FamiliaPage />} />
+              {/* Historial de un miembro: solo owner (plan family) */}
+              <Route element={<FamilyOwnerRoute />}>
+                <Route path="/familia/:memberId" element={<FamiliaMemberPage />} />
+              </Route>
             </Route>
           </Route>
 

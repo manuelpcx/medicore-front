@@ -6,6 +6,9 @@ export interface ApiResponse<T> {
 
 export type UserRole = 'patient' | 'admin';
 
+/** Plan de suscripción del usuario. Viene de `res.user` de /auth/login. */
+export type Plan = 'free' | 'pro' | 'family';
+
 export interface User {
   id: string;
   email: string;
@@ -16,6 +19,45 @@ export interface User {
   created_at: string;
   /** Rol del usuario. Viene del JWT decodificado o de la respuesta de /auth/login. */
   role?: UserRole;
+  /** Plan de suscripción. `'family'` habilita el modo owner del plan familiar. */
+  plan?: Plan;
+  /** Grupo familiar al que pertenece como miembro aceptado (null si ninguno). */
+  family_group_id?: string | null;
+}
+
+// ── Plan Familiar ───────────────────────────────────────────────────────────
+export type FamilyStatus = 'pending' | 'accepted' | 'rejected';
+export type Relationship = 'padre' | 'madre' | 'hijo/a' | 'cónyuge' | 'otro';
+
+/** Fila devuelta por GET /family/members (family.service.ts:123-129). */
+export interface FamilyMemberRow {
+  id: string;
+  nombre: string;
+  relationship: string;
+  status: FamilyStatus;
+  accepted_at: string | null;
+}
+
+/** Info del grupo devuelta por GET /family/group (family.service.ts:200-209). */
+export interface FamilyGroupInfo {
+  id: string;
+  owner: { id: string; nombre: string | null };
+  max_members: number;
+  members: number;
+  available: number;
+}
+
+/** Fila FamilyMember cruda devuelta por GET /family/invitations, /accept, /reject. */
+export interface Invitation {
+  id: string;
+  family_group_id: string;
+  user_id: string | null;
+  email: string;
+  relationship: string;
+  status: FamilyStatus;
+  invited_by: string;
+  invited_at: string;
+  accepted_at: string | null;
 }
 
 export interface VitalSigns {
