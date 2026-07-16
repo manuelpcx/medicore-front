@@ -1,5 +1,5 @@
 import api from './axios';
-import type { LoginDto, RegisterDto, LoginResponse, ApiResponse } from '../types';
+import type { LoginDto, RegisterDto, LoginResponse, ApiResponse, Plan, SetPlanResponse } from '../types';
 
 export const authApi = {
   register: (dto: RegisterDto) =>
@@ -12,6 +12,10 @@ export const authApi = {
     api.post<ApiResponse<{ access_token: string }>>('/auth/refresh', { refresh_token }).then((r) => r.data.data),
 
   logout: () => api.post('/auth/logout'),
+
+  /** Activa el plan del usuario — PATCH /auth/plan. */
+  setPlan: (plan: Plan) =>
+    api.patch<ApiResponse<SetPlanResponse>>('/auth/plan', { plan }).then((r) => r.data.data),
 
   /** Elimina la cuenta permanentemente — derecho de supresión Ley 19.628 */
   deleteAccount: () =>

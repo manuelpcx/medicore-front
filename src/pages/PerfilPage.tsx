@@ -14,7 +14,14 @@ import { Icon } from '../components/ui/Icon';
 import { fDate, extractError } from '../utils/format';
 import { authApi } from '../api/auth.api';
 import { toast } from '../store/toast.store';
-import type { UpdatePatientDto } from '../types';
+import type { Plan, UpdatePatientDto } from '../types';
+
+// Etiquetas legibles del plan de suscripción.
+const PLAN_LABELS: Record<Plan, string> = {
+  free: 'Free',
+  pro: 'Pro',
+  family: 'Family',
+};
 
 // ── Schema del perfil ───────────────────────────────────────────────────────
 const schema = z.object({
@@ -118,6 +125,15 @@ export default function PerfilPage() {
             {user?.fecha_nacimiento && `Nacimiento: ${fDate(user.fecha_nacimiento)}`}
           </div>
         </div>
+      </Card>
+
+      {/* Tu plan */}
+      <Card style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 20, padding: 20, flexWrap: 'wrap' }}>
+        <div>
+          <div style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 4 }}>Tu plan</div>
+          <div style={{ fontWeight: 600, fontSize: 18 }}>{PLAN_LABELS[user?.plan ?? 'free']}</div>
+        </div>
+        <Button variant="secondary" onClick={() => navigate('/elegir-plan')}>Cambiar plan</Button>
       </Card>
 
       {/* Tabs */}

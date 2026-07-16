@@ -178,6 +178,12 @@ export interface LoginResponse extends AuthTokens {
   message: string;
 }
 
+/** Respuesta de PATCH /auth/plan (desenvuelta del ApiResponse). */
+export interface SetPlanResponse {
+  user: User;
+  message: string;
+}
+
 // Form DTOs
 export interface RegisterDto {
   nombre: string;
@@ -187,6 +193,8 @@ export interface RegisterDto {
   tipo_sangre?: string;
   /** Consentimiento explícito — debe ser true. Requerido por Ley 19.628 / Ley 21.719. */
   consent_accepted: boolean;
+  /** Token de la casilla reCAPTCHA v2 — exigido por POST /auth/register. */
+  recaptcha_token: string;
 }
 
 export interface LoginDto {

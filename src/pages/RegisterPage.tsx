@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
+import ReCAPTCHA from 'react-google-recaptcha';
 import { authApi } from '../api/auth.api';
 import { useAuthStore } from '../store/auth.store';
 import { extractError } from '../utils/format';
@@ -24,10 +25,15 @@ const schema = z.object({
 });
 type Form = z.infer<typeof schema>;
 
+// Site key reCAPTCHA v2 — env con fallback a la test key pública de Google.
+const SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY ?? '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI';
+
 export default function RegisterPage() {
   const navigate = useNavigate();
   const { setAuth } = useAuthStore();
   const [serverError, setServerError] = useState('');
+  const captchaRef = useRef<ReCAPTCHA>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<Form>({
     resolver: zodResolver(schema),
@@ -37,12 +43,16 @@ export default function RegisterPage() {
 
   const onSubmit = async (values: Form) => {
     setServerError('');
+    if (!captchaToken) return; // guard: sin token no se envía (R11)
     try {
-      const res = await authApi.register(values);
+      const res = await authApi.register({ ...values, recaptcha_token: captchaToken });
       setAuth(res.user, res.access_token, res.refresh_token);
-      navigate('/dashboard');
+      navigate('/elegir-plan');
     } catch (err) {
       setServerError(extractError(err));
+      // El token v2 es de un solo uso: reseteamos la casilla para el reintento (R15).
+      captchaRef.current?.reset();
+      setCaptchaToken(null);
     }
   };
 
@@ -167,6 +177,20 @@ export default function RegisterPage() {
             )}
           </div>
 
+          {/* ── reCAPTCHA v2 ("No soy un robot") ─────────────────────────── */}
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <ReCAPTCHA
+              ref={captchaRef}
+              sitekey={SITE_KEY}
+              onChange={(token) => setCaptchaToken(token)}
+              onExpired={() => setCaptchaToken(null)}
+              onErrored={() => {
+                setCaptchaToken(null);
+                setServerError('No se pudo cargar la verificación reCAPTCHA. Reintenta.');
+              }}
+            />
+          </div>
+
           {/* Error del servidor */}
           {serverError && (
             <div style={{
@@ -178,7 +202,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <Button type="submit" loading={isSubmitting} size="lg" style={{ marginTop: 4 }}>
+          <Button type="submit" loading={isSubmitting} disabled={!captchaToken} size="lg" style={{ marginTop: 4 }}>
             Crear cuenta
           </Button>
         </form>

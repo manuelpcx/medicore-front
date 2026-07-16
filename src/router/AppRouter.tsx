@@ -15,6 +15,7 @@ const ExamenesPage   = lazy(() => import('../pages/ExamenesPage'));
 const AlergiasPage   = lazy(() => import('../pages/AlergiasPage'));
 const VacunasPage    = lazy(() => import('../pages/VacunasPage'));
 const PerfilPage     = lazy(() => import('../pages/PerfilPage'));
+const ElegirPlanPage = lazy(() => import('../pages/ElegirPlanPage'));
 const FamiliaPage    = lazy(() => import('../pages/FamiliaPage'));
 const FamiliaMemberPage = lazy(() => import('../pages/FamiliaMemberPage'));
 const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage'));
@@ -39,6 +40,8 @@ export function AppRouter() {
 
           {/* Protected routes */}
           <Route element={<ProtectedRoute />}>
+            {/* Selección de plan — pantalla completa, con sesión, fuera de AppLayout */}
+            <Route path="/elegir-plan" element={<ElegirPlanPage />} />
             <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/historial" element={<HistorialPage />} />
