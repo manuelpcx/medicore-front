@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
+import { ProfileContextBanner } from '../family/ProfileContextBanner';
 
 /*
   Shell "Clínico Moderno" (1b): barra lateral fija + barra superior sticky.
@@ -33,6 +34,7 @@ export function AppLayout() {
       }}>
         <TopBar onMenuClick={() => setMobileOpen(true)} />
         <main className="app-shell-content" style={{ flex: 1, padding: '28px', overflowX: 'hidden' }}>
+          <ProfileContextBanner />
           <Outlet />
         </main>
       </div>

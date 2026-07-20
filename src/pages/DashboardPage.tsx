@@ -11,6 +11,8 @@ import { tipoBadge, severidadBadge } from '../components/ui/Badge';
 import { ListSkeleton, Skeleton } from '../components/ui/Skeleton';
 import { Icon, type IconName } from '../components/ui/Icon';
 import { FamilyInvitationBanner } from '../components/family/FamilyInvitationBanner';
+import { MinorSummary } from '../components/family/MinorSummary';
+import { useActiveProfile } from '../store/active-profile.store';
 import { fDate } from '../utils/format';
 
 const TIPO_COLOR: Record<string, { bg: string; col: string }> = {
@@ -44,11 +46,17 @@ function StatTile({ icon, bg, col, value, label }: { icon: IconName; bg: string;
 
 export default function DashboardPage() {
   const user = useAuthStore((s) => s.user);
+  const isMinor = useActiveProfile((s) => s.isMinor);
   const { data: patient, isLoading: loadingPatient } = usePatient();
   const { data: history = [], isLoading: loadingHistory } = useHistory();
   const { data: medications = [], isLoading: loadingMeds } = useMedications();
   const { data: allergies = [], isLoading: loadingAllergies } = useAllergies();
   const { data: exams = [] } = useExams();
+
+  // Cuando el perfil activo es un menor, el dashboard muestra su resumen (con
+  // identidad + métricas re-keyed) en lugar de las tarjetas exclusivas del
+  // adulto (signos vitales / tipo de sangre de /patients/me). R37.
+  if (isMinor) return <MinorSummary />;
 
   const activeMeds = medications.filter((m) => m.estado === 'activo');
   const recentHistory = [...history].slice(0, 3);

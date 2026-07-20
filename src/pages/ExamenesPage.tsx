@@ -14,6 +14,7 @@ import { ListSkeleton } from '../components/ui/Skeleton';
 import { Icon } from '../components/ui/Icon';
 import { fDate } from '../utils/format';
 import { examsApi } from '../api/exams.api';
+import { useActiveProfile } from '../store/active-profile.store';
 import type { Exam } from '../types';
 
 const schema = z.object({
@@ -29,6 +30,9 @@ export default function ExamenesPage() {
   const { data: exams = [], isLoading } = useExams();
   const create = useCreateExam();
   const remove = useDeleteExam();
+  // patientId del perfil activo: se incluye en la descarga/preview del archivo
+  // para pasar el guard de ownership del backend cuando el perfil es un menor (R25).
+  const patientId = useActiveProfile((s) => s.patientId);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [previewExam, setPreviewExam] = useState<Exam | null>(null);
@@ -56,7 +60,7 @@ export default function ExamenesPage() {
     let objectUrl: string | null = null;
     let cancelled = false;
     setPreviewLoading(true);
-    examsApi.getFileBlob(previewExam.id)
+    examsApi.getFileBlob(previewExam.id, patientId)
       .then((blob) => {
         if (cancelled) return;
         objectUrl = URL.createObjectURL(blob);
@@ -68,11 +72,11 @@ export default function ExamenesPage() {
       if (objectUrl) URL.revokeObjectURL(objectUrl);
       setPreviewUrl(null);
     };
-  }, [previewExam]);
+  }, [previewExam, patientId]);
 
   // Descarga el archivo obteniéndolo autenticado y disparando un <a> temporal.
   const handleDownload = async (exam: Exam) => {
-    const blob = await examsApi.getFileBlob(exam.id);
+    const blob = await examsApi.getFileBlob(exam.id, patientId);
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;

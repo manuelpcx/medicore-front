@@ -60,6 +60,29 @@ export interface Invitation {
   accepted_at: string | null;
 }
 
+// ── Espacio del menor (feature 19/20) ───────────────────────────────────────
+export type SexoMenor = 'masculino' | 'femenino' | 'otro';
+
+/** Menor devuelto por GET /family/minors (feature 19). */
+export interface Minor {
+  id: string;
+  nombre: string;
+  birth_date: string;
+  edad: number;
+  sexo: SexoMenor;
+  relacion?: string | null;
+  is_minor: boolean;
+}
+
+/** Payload de POST /family/minors. `consentimiento` debe ser true. */
+export interface CreateMinorDto {
+  nombre: string;
+  birth_date: string;
+  sexo: SexoMenor;
+  relacion?: string;
+  consentimiento: boolean;
+}
+
 export interface VitalSigns {
   peso?: number;
   altura?: number;
