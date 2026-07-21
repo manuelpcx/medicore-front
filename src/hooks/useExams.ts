@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { examsApi } from '../api/exams.api';
 import { useActiveProfile } from '../store/active-profile.store';
 import { toast } from '../store/toast.store';
-import { extractError } from '../utils/format';
+import { extractError, isExamFileQuotaError } from '../utils/format';
 import type { CreateExamDto } from '../types';
 
 // queryKey re-keyed por el perfil activo (ver nota en useAllergies.ts).
@@ -22,7 +22,14 @@ export function useCreateExam() {
   return useMutation({
     mutationFn: ({ dto, file }: { dto: CreateExamDto; file?: File }) => examsApi.create(dto, file, patientId),
     onSuccess: () => { qc.invalidateQueries({ queryKey: key(patientId) }); toast.success('Examen subido'); },
-    onError: (err) => toast.error(extractError(err)),
+    onError: (err) => {
+      // El error del tope de exámenes (#26) lo muestra ExamenesPage con un
+      // banner específico + CTA (R10, R14); el toast genérico duplicaría el
+      // aviso con el texto genérico "Acceso denegado" (ver nota de
+      // extractError en requirements.md), así que se omite solo para ese
+      // caso. El resto de errores de subida siguen su toast genérico (R11).
+      if (!isExamFileQuotaError(err)) toast.error(extractError(err));
+    },
   });
 }
 

@@ -22,21 +22,25 @@ const PLANS: readonly PlanCard[] = [
     nombre: 'Free',
     precio: '$0',
     color: 'var(--accent)',
-    features: ['Historial personal', 'Medicamentos y exámenes', 'Alergias y vacunas'],
+    features: ['Historial personal', 'Hasta 4 exámenes con archivo', 'Alergias y vacunas'],
   },
   {
     id: 'pro',
     nombre: 'Pro',
     precio: '$4.990/mes',
     color: 'var(--accent)',
-    features: ['Todo lo de Free', 'Recordatorios avanzados', 'Soporte prioritario'],
+    features: ['Todo lo de Free', 'Exámenes con archivo ilimitados'],
   },
   {
     id: 'family',
     nombre: 'Family',
     precio: '$8.990/mes',
     color: 'var(--purple)',
-    features: ['Todo lo de Pro', 'Hasta 4 miembros', 'Gestión de historiales'],
+    features: [
+      'Todo lo de Pro',
+      'Hasta 5 personas en tu grupo: familiares + menores',
+      'Agregar menores a tu cargo (exclusivo Family)',
+    ],
   },
 ] as const;
 

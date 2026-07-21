@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useExams, useCreateExam, useDeleteExam } from '../hooks/useExams';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,7 +13,7 @@ import { FileUpload } from '../components/ui/FileUpload';
 import { resultadoBadge } from '../components/ui/Badge';
 import { ListSkeleton } from '../components/ui/Skeleton';
 import { Icon } from '../components/ui/Icon';
-import { fDate } from '../utils/format';
+import { fDate, isExamFileQuotaError, examFileQuotaMessage } from '../utils/format';
 import { examsApi } from '../api/exams.api';
 import { useActiveProfile } from '../store/active-profile.store';
 import type { Exam } from '../types';
@@ -27,6 +28,7 @@ const schema = z.object({
 type Form = z.infer<typeof schema>;
 
 export default function ExamenesPage() {
+  const navigate = useNavigate();
   const { data: exams = [], isLoading } = useExams();
   const create = useCreateExam();
   const remove = useDeleteExam();
@@ -40,17 +42,32 @@ export default function ExamenesPage() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [examLimitError, setExamLimitError] = useState<string | null>(null);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<Form>({
     resolver: zodResolver(schema),
     defaultValues: { resultado_badge: 'pendiente' },
   });
 
-  const openCreate = () => { reset({ resultado_badge: 'pendiente' }); setFile(null); setModalOpen(true); };
+  const openCreate = () => {
+    reset({ resultado_badge: 'pendiente' });
+    setFile(null);
+    setExamLimitError(null);
+    setModalOpen(true);
+  };
 
   const onSubmit = async (values: Form) => {
-    await create.mutateAsync({ dto: values, file: file ?? undefined });
-    setModalOpen(false);
+    setExamLimitError(null);
+    try {
+      await create.mutateAsync({ dto: values, file: file ?? undefined });
+      setModalOpen(false);
+    } catch (err) {
+      // Otros errores de subida (magic-bytes, tamaño, tipo) ya muestran su
+      // toast genérico vía onError de useCreateExam (R11); aquí solo se
+      // captura para mostrar el banner específico del tope (R10) y evitar
+      // una promesa no manejada, sin relanzar.
+      if (isExamFileQuotaError(err)) setExamLimitError(examFileQuotaMessage(err));
+    }
   };
 
   // Carga la vista previa como blob autenticado (JWT via axios) y crea un
@@ -177,6 +194,26 @@ export default function ExamenesPage() {
             value={file}
             onChange={setFile}
           />
+          {examLimitError && (
+            <div style={{
+              background: 'var(--amber2)', border: '1px solid var(--amber)',
+              borderRadius: 12, padding: '12px 14px',
+              display: 'flex', flexDirection: 'column', gap: 8,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text)' }}>
+                <Icon name="alert" size={16} color="var(--amber)" />
+                {examLimitError}
+              </div>
+              <Button
+                size="sm"
+                type="button"
+                onClick={() => navigate('/elegir-plan')}
+                style={{ alignSelf: 'flex-start', background: 'var(--amber)', color: '#fff' }}
+              >
+                Ver planes
+              </Button>
+            </div>
+          )}
         </form>
       </Modal>
 

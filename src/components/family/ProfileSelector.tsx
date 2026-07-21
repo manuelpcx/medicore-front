@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMinors } from '../../hooks/useMinors';
 import { useFamilyGroup } from '../../hooks/useFamily';
 import { useActiveProfile } from '../../store/active-profile.store';
@@ -24,7 +25,9 @@ interface ProfileSelectorProps {
  * Implementa los 4 estados de `useMinors` dentro del menú.
  */
 export function ProfileSelector({ onSelect }: ProfileSelectorProps) {
+  const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+  const isFamily = user?.plan === 'family';
   const active = useActiveProfile();
   const setProfile = useActiveProfile((s) => s.setProfile);
   const { data: minors = [], isLoading, isError, error, refetch } = useMinors();
@@ -57,6 +60,11 @@ export function ProfileSelector({ onSelect }: ProfileSelectorProps) {
     setOpen(false);
     setAddOpen(true);
     onSelect?.();
+  };
+  const goToUpsell = () => {
+    setOpen(false);
+    onSelect?.();
+    navigate('/elegir-plan');
   };
 
   return (
@@ -145,10 +153,14 @@ export function ProfileSelector({ onSelect }: ProfileSelectorProps) {
               ) : minors.length === 0 ? (
                 <div style={{ padding: '12px 10px', textAlign: 'center' }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 2 }}>Aún no agregas menores</div>
-                  <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 10 }}>Agrega el perfil de un menor a tu cargo.</div>
-                  <Button size="sm" onClick={openAdd} style={{ background: 'var(--amber)', color: '#fff' }}>
-                    <Icon name="plus" size={15} color="#fff" /> Agregar menor
-                  </Button>
+                  <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: isFamily ? 10 : 0 }}>
+                    {isFamily ? 'Agrega el perfil de un menor a tu cargo.' : 'Agregar menores requiere el Plan Family.'}
+                  </div>
+                  {isFamily && (
+                    <Button size="sm" onClick={openAdd} style={{ background: 'var(--amber)', color: '#fff' }}>
+                      <Icon name="plus" size={15} color="#fff" /> Agregar menor
+                    </Button>
+                  )}
                 </div>
               ) : (
                 minors.map((m) => (
@@ -168,16 +180,32 @@ export function ProfileSelector({ onSelect }: ProfileSelectorProps) {
 
             {/* Pie: Agregar menor (R14) */}
             <div style={{ padding: 10, borderTop: '1px solid var(--border)' }}>
-              <Button
-                onClick={openAdd}
-                disabled={atCap}
-                style={{ width: '100%', background: atCap ? 'var(--surface2)' : 'var(--amber)', color: atCap ? 'var(--text3)' : '#fff' }}
-              >
-                <Icon name="plus" size={15} color={atCap ? 'var(--text3)' : '#fff'} /> Agregar menor
-              </Button>
-              {atCap && (
-                <div style={{ fontSize: 11, color: 'var(--text3)', textAlign: 'center', marginTop: 6 }}>
-                  Alcanzaste el cupo del plan familiar.
+              {isFamily ? (
+                <>
+                  <Button
+                    onClick={openAdd}
+                    disabled={atCap}
+                    style={{ width: '100%', background: atCap ? 'var(--surface2)' : 'var(--amber)', color: atCap ? 'var(--text3)' : '#fff' }}
+                  >
+                    <Icon name="plus" size={15} color={atCap ? 'var(--text3)' : '#fff'} /> Agregar menor
+                  </Button>
+                  {atCap && (
+                    <div style={{ fontSize: 11, color: 'var(--text3)', textAlign: 'center', marginTop: 6 }}>
+                      Alcanzaste el cupo del plan familiar.
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 8 }}>
+                    Agregar menores a tu cargo requiere el Plan Familiar.
+                  </div>
+                  <Button
+                    onClick={goToUpsell}
+                    style={{ width: '100%', background: 'var(--purple)', color: '#fff' }}
+                  >
+                    Actualizar a Plan Familiar
+                  </Button>
                 </div>
               )}
             </div>
