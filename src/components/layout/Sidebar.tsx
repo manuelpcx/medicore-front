@@ -4,6 +4,7 @@ import { useAuthStore } from '../../store/auth.store';
 import { authApi } from '../../api/auth.api';
 import { toast } from '../../store/toast.store';
 import { QRModal } from '../modals/QRModal';
+import { ProfileSelector } from '../family/ProfileSelector';
 import { Icon, type IconName } from '../ui/Icon';
 
 /*
@@ -64,6 +65,11 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
             color: '#fff', fontWeight: 800, fontSize: 18, flexShrink: 0,
           }}>M</span>
           <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--accent)' }}>MediHistory</span>
+        </div>
+
+        {/* Selector de perfil (adulto + menores) — punto único de control */}
+        <div style={{ padding: '0 12px 14px' }}>
+          <ProfileSelector onSelect={onMobileClose} />
         </div>
 
         {/* Nav */}

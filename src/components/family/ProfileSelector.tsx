@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useMinors } from '../../hooks/useMinors';
+import { useFamilyGroup } from '../../hooks/useFamily';
 import { useActiveProfile } from '../../store/active-profile.store';
 import { useAuthStore } from '../../store/auth.store';
 import { Badge } from '../ui/Badge';
@@ -10,67 +11,83 @@ import { extractError } from '../../utils/format';
 import { AddMinorModal } from './AddMinorModal';
 import type { Minor } from '../../types';
 
-const MAX_MINORS = 5;
+interface ProfileSelectorProps {
+  /** Se invoca al elegir un perfil o abrir el alta; cierra el drawer móvil. */
+  onSelect?: () => void;
+}
 
 /**
- * Selector de perfil en el header (R12–R20). Lista al adulto y a sus menores
- * (de `useMinors`), muestra badge "Menor" ámbar, contador X/5 y la opción
- * "Agregar menor". Al seleccionar un perfil actualiza el store (R10).
+ * Selector de perfil alojado en el Sidebar (#22, antes en el TopBar). Lista al
+ * adulto y a sus menores (de `useMinors`), muestra badge "Menor" ámbar, el
+ * desglose del cupo unificado (`useFamilyGroup`) y la opción "Agregar menor".
+ * Al seleccionar un perfil actualiza el store `useActiveProfile` (R3).
  * Implementa los 4 estados de `useMinors` dentro del menú.
  */
-export function ProfileSelector() {
+export function ProfileSelector({ onSelect }: ProfileSelectorProps) {
   const user = useAuthStore((s) => s.user);
   const active = useActiveProfile();
   const setProfile = useActiveProfile((s) => s.setProfile);
   const { data: minors = [], isLoading, isError, error, refetch } = useMinors();
+  const { data: group } = useFamilyGroup();
 
   const [open, setOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
 
-  const atCap = minors.length >= MAX_MINORS;
+  // Cupo unificado de #21 (miembros + menores contra max_members). Sin grupo aún
+  // (404) no se bloquea el primer alta; el backend defiende con 409 (R14).
+  const atCap = group ? group.available <= 0 : false;
+  const cupoLabel = group
+    ? `${group.occupied}/${group.max_members} · ${group.minors} menores`
+    : `${minors.length} menores`;
   const activeInicial = (active.isMinor ? active.nombre : user?.nombre)?.[0]?.toUpperCase() ?? '?';
   const activeLabel = active.isMinor ? active.nombre : user?.nombre ?? 'Usuario';
 
   const selectAdult = () => {
     setProfile({ patientId: null, isMinor: false, nombre: null });
     setOpen(false);
+    onSelect?.();
   };
   const selectMinor = (m: Minor) => {
     setProfile({ patientId: m.id, isMinor: true, nombre: m.nombre });
     setOpen(false);
+    onSelect?.();
   };
   const openAdd = () => {
     if (atCap) return;
     setOpen(false);
     setAddOpen(true);
+    onSelect?.();
   };
 
   return (
-    <div style={{ position: 'relative', flexShrink: 0 }}>
-      {/* Chip del perfil activo */}
+    <div style={{ position: 'relative', width: '100%' }}>
+      {/* Chip del perfil activo (ancho del contenedor de la sidebar) */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
         style={{
-          display: 'flex', alignItems: 'center', gap: 9,
-          padding: '5px 12px 5px 6px', borderRadius: 30, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: 9, width: '100%',
+          justifyContent: 'space-between',
+          padding: '6px 12px 6px 6px', borderRadius: 30, cursor: 'pointer',
           background: active.isMinor ? 'var(--amber2)' : 'var(--surface2)',
           border: active.isMinor ? '1px solid var(--amber)' : '1px solid transparent',
         }}
       >
-        <span style={{
-          width: 32, height: 32, borderRadius: '50%',
-          background: active.isMinor ? 'var(--amber)' : 'var(--accent)',
-          color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontWeight: 700, fontSize: 13,
-        }}>{activeInicial}</span>
-        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {activeLabel}
+        <span style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
+          <span style={{
+            width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
+            background: active.isMinor ? 'var(--amber)' : 'var(--accent)',
+            color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontWeight: 700, fontSize: 13,
+          }}>{activeInicial}</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {activeLabel}
+          </span>
+          {active.isMinor && <Badge variant="warning" size="sm">Menor</Badge>}
         </span>
-        {active.isMinor && <Badge variant="warning" size="sm">Menor</Badge>}
-        <Icon name="chevron" size={15} color="var(--text3)" style={{ transform: open ? 'rotate(90deg)' : 'rotate(0)', transition: 'transform 0.15s' }} />
+        <Icon name="chevron" size={15} color="var(--text3)" style={{ flexShrink: 0, transform: open ? 'rotate(90deg)' : 'rotate(0)', transition: 'transform 0.15s' }} />
       </button>
 
       {open && (
@@ -80,18 +97,18 @@ export function ProfileSelector() {
           <div
             role="menu"
             style={{
-              position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 61,
-              width: 300, background: 'var(--surface)', border: '1px solid var(--border)',
+              position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 61,
+              width: '100%', minWidth: 240, background: 'var(--surface)', border: '1px solid var(--border)',
               borderRadius: 14, boxShadow: 'var(--shadow-lg)', overflow: 'hidden',
             }}
           >
-            {/* Cabecera con contador X/5 (R14) */}
+            {/* Cabecera con el desglose del cupo unificado (R14) */}
             <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
               padding: '12px 16px', borderBottom: '1px solid var(--border)',
             }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: 0.4 }}>Perfiles</span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text3)' }}>{minors.length}/{MAX_MINORS} menores</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text3)', whiteSpace: 'nowrap' }}>{cupoLabel}</span>
             </div>
 
             <div style={{ padding: 8, display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -149,7 +166,7 @@ export function ProfileSelector() {
               )}
             </div>
 
-            {/* Pie: Agregar menor (R15, R16) */}
+            {/* Pie: Agregar menor (R14) */}
             <div style={{ padding: 10, borderTop: '1px solid var(--border)' }}>
               <Button
                 onClick={openAdd}
@@ -160,7 +177,7 @@ export function ProfileSelector() {
               </Button>
               {atCap && (
                 <div style={{ fontSize: 11, color: 'var(--text3)', textAlign: 'center', marginTop: 6 }}>
-                  Alcanzaste el máximo de {MAX_MINORS} menores.
+                  Alcanzaste el cupo del plan familiar.
                 </div>
               )}
             </div>

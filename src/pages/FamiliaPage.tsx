@@ -5,18 +5,22 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { Badge } from '../components/ui/Badge';
-import { ListSkeleton } from '../components/ui/Skeleton';
+import { ListSkeleton, Skeleton } from '../components/ui/Skeleton';
 import { Icon } from '../components/ui/Icon';
 import { InviteMemberModal } from '../components/family/InviteMemberModal';
+import { AddMinorModal } from '../components/family/AddMinorModal';
 import {
   useFamilyMembers,
   useFamilyGroup,
   useMyInvitations,
   useRemoveFamilyMember,
 } from '../hooks/useFamily';
+import { useMinors } from '../hooks/useMinors';
+import { extractError } from '../utils/format';
 import type { FamilyMemberRow } from '../types';
 
-const MAX_MEMBERS_DEFAULT = 4;
+// Tope unificado del plan familiar (#21): 5 en total incluido el titular.
+const MAX_MEMBERS_DEFAULT = 5;
 
 function statusBadge(status: string) {
   if (status === 'accepted') return <Badge variant="success" size="sm">Aceptado</Badge>;
@@ -28,33 +32,74 @@ function statusBadge(status: string) {
 function OwnerView() {
   const navigate = useNavigate();
   const { data: members = [], isLoading } = useFamilyMembers();
-  const { data: group } = useFamilyGroup();
+  const { data: group, isLoading: groupLoading } = useFamilyGroup();
+  const {
+    data: minors = [],
+    isLoading: minorsLoading,
+    isError: minorsError,
+    error: minorsErrObj,
+    refetch: refetchMinors,
+  } = useMinors();
   const remove = useRemoveFamilyMember();
 
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [addMinorOpen, setAddMinorOpen] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState<FamilyMemberRow | null>(null);
 
-  const acceptedCount = members.filter((m) => m.status === 'accepted').length;
-  const usados = 1 + acceptedCount; // titular + miembros aceptados
+  // Cupo unificado (#21): titular + miembros + menores contra max_members.
+  // Sin grupo aún (404) usamos defaults coherentes (titular ocupa 1) sin
+  // bloquear indebidamente el alta (R21); el backend defiende con 400/409.
   const total = group?.max_members ?? MAX_MEMBERS_DEFAULT;
+  const usados = group?.occupied ?? 1;
+  const membersCount = group?.members ?? members.filter((m) => m.status === 'accepted').length;
+  const minorsCount = group?.minors ?? minors.length;
+  const available = group?.available ?? (total - usados);
+  const atCap = available <= 0;
 
   return (
     <div style={{ animation: 'fadeIn 0.2s ease' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 className="serif" style={{ fontSize: 26, fontWeight: 400 }}>Mi grupo familiar</h1>
-          <p style={{ color: 'var(--text2)', fontSize: 14, marginTop: 2 }}>
-            {usados} de {total} cupos usados
-          </p>
+          {groupLoading ? (
+            <div style={{ marginTop: 6 }}><Skeleton width={280} height={14} /></div>
+          ) : (
+            <p style={{ color: 'var(--text2)', fontSize: 14, marginTop: 2 }}>
+              {usados} de {total} cupos usados · {membersCount} familiares · {minorsCount} menores
+            </p>
+          )}
         </div>
-        <Button
-          onClick={() => setInviteOpen(true)}
-          style={{ background: 'var(--purple)', color: '#fff' }}
-        >
-          + Invitar familiar
-        </Button>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Button
+            onClick={() => setInviteOpen(true)}
+            disabled={atCap}
+            style={{ background: 'var(--purple)', color: '#fff' }}
+          >
+            + Invitar familiar
+          </Button>
+          <Button
+            onClick={() => setAddMinorOpen(true)}
+            disabled={atCap}
+            style={{ background: 'var(--amber)', color: '#fff' }}
+          >
+            + Agregar menor
+          </Button>
+        </div>
       </div>
 
+      {atCap && (
+        <div style={{
+          background: 'var(--amber2)', border: '1px solid var(--amber)', borderRadius: 12,
+          padding: '10px 14px', marginBottom: 20, fontSize: 13, color: 'var(--text2)',
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <Icon name="alert" size={18} color="var(--amber)" />
+          Alcanzaste el cupo del plan familiar (5 en total, incluidos miembros y menores).
+        </div>
+      )}
+      {!atCap && <div style={{ marginBottom: 20 }} />}
+
+      <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text2)', marginBottom: 12 }}>Familiares con cuenta</h2>
       {isLoading ? (
         <ListSkeleton count={3} />
       ) : members.length === 0 ? (
@@ -104,7 +149,66 @@ function OwnerView() {
         </div>
       )}
 
+      {/* Sección de menores a cargo (4 estados) — R7, R17–R20 */}
+      <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text2)', margin: '28px 0 12px' }}>Menores a tu cargo</h2>
+      {minorsLoading ? (
+        <ListSkeleton count={2} />
+      ) : minorsError ? (
+        <Card style={{ textAlign: 'center', padding: 32 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+            <Icon name="alert" size={32} color="var(--amber)" />
+          </div>
+          <p style={{ color: 'var(--text2)', marginBottom: 14 }}>
+            No se pudieron cargar los menores: {extractError(minorsErrObj)}
+          </p>
+          <Button variant="secondary" onClick={() => refetchMinors()}>Reintentar</Button>
+        </Card>
+      ) : minors.length === 0 ? (
+        <Card style={{ textAlign: 'center', padding: 40 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+            <span style={{ width: 56, height: 56, borderRadius: 16, background: 'var(--amber2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="user" size={28} color="var(--amber)" />
+            </span>
+          </div>
+          <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Aún no agregas menores</div>
+          <p style={{ color: 'var(--text2)', fontSize: 14, maxWidth: 380, margin: '0 auto 18px' }}>
+            Agrega el perfil de un menor a tu cargo para gestionar su historial médico.
+          </p>
+          <Button
+            onClick={() => setAddMinorOpen(true)}
+            disabled={atCap}
+            style={{ background: 'var(--amber)', color: '#fff' }}
+          >
+            + Agregar menor
+          </Button>
+        </Card>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {minors.map((mn) => (
+            <Card key={mn.id} style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', borderColor: 'var(--amber)' }}>
+              <span style={{
+                width: 46, height: 46, borderRadius: '50%', background: 'var(--amber2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'var(--amber)', fontWeight: 700, fontSize: 18, flexShrink: 0,
+              }}>
+                {mn.nombre?.[0]?.toUpperCase() ?? '?'}
+              </span>
+              <div style={{ flex: 1, minWidth: 160 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontWeight: 700, fontSize: 15 }}>{mn.nombre}</span>
+                  <Badge variant="warning" size="sm">Menor</Badge>
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--text2)', marginTop: 2 }}>
+                  {mn.edad} años{mn.relacion ? ` · ${mn.relacion}` : ''}
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
       <InviteMemberModal open={inviteOpen} onClose={() => setInviteOpen(false)} />
+      <AddMinorModal open={addMinorOpen} onClose={() => setAddMinorOpen(false)} />
 
       <Modal
         open={!!confirmRemove}
@@ -206,8 +310,9 @@ function MemberOrUpsellView() {
         </div>
         <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Cuida a toda tu familia</h2>
         <p style={{ color: 'var(--text2)', fontSize: 14, maxWidth: 420, margin: '0 auto 20px' }}>
-          Con el Plan Familiar puedes invitar hasta 3 familiares y consultar su
-          historial médico desde un solo lugar.
+          Con el Plan Familiar puedes sumar hasta 4 familiares (5 en total,
+          incluidos menores a tu cargo) y consultar su historial médico desde un
+          solo lugar.
         </p>
         <Button
           onClick={() => navigate('/perfil')}

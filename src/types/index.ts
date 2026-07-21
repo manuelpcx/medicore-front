@@ -44,6 +44,8 @@ export interface FamilyGroupInfo {
   owner: { id: string; nombre: string | null };
   max_members: number;
   members: number;
+  minors: number;
+  occupied: number;
   available: number;
 }
 
