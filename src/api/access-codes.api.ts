@@ -3,16 +3,21 @@ import axios from 'axios';
 import type { AccessCode, ApiResponse } from '../types';
 import type { DoctorSnapshot } from '../types/doctor.types';
 
+// Anexa `?patientId=<id>` cuando el perfil activo es un menor propio; sin él
+// (patientId null/ausente) opera sobre el Patient del adulto (comportamiento
+// actual). El backend soporta ?patientId= vía PatientScopeGuard.
+const q = (patientId?: string | null) => (patientId ? `?patientId=${patientId}` : '');
+
 export const accessCodesApi = {
-  generate: () =>
+  generate: (patientId?: string | null) =>
     api.post<ApiResponse<AccessCode>>(
-      '/access-codes/generate').then((r) => r.data.data),
+      `/access-codes/generate${q(patientId)}`).then((r) => r.data.data),
 
   verify: (code: string) =>
     api.post<ApiResponse<unknown>>('/access-codes/verify', { code }).then((r) => r.data.data),
 
-  revoke: () =>
-    api.delete<ApiResponse<{ message: string }>>('/access-codes/revoke').then((r) => r.data.data),
+  revoke: (patientId?: string | null) =>
+    api.delete<ApiResponse<{ message: string }>>(`/access-codes/revoke${q(patientId)}`).then((r) => r.data.data),
 };
 
 /**

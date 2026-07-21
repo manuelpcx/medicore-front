@@ -1,18 +1,21 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { accessCodesApi, verifyAccessCode } from '../api/access-codes.api';
+import { useActiveProfile } from '../store/active-profile.store';
 import { toast } from '../store/toast.store';
 import { extractError } from '../utils/format';
 
 export function useGenerateAccessCode() {
+  const patientId = useActiveProfile((s) => s.patientId);
   return useMutation({
-    mutationFn: accessCodesApi.generate,
+    mutationFn: () => accessCodesApi.generate(patientId),
     onError: (err) => toast.error(extractError(err)),
   });
 }
 
 export function useRevokeAccessCode() {
+  const patientId = useActiveProfile((s) => s.patientId);
   return useMutation({
-    mutationFn: accessCodesApi.revoke,
+    mutationFn: () => accessCodesApi.revoke(patientId),
     onSuccess: () => toast.success('Acceso revocado'),
     onError: (err) => toast.error(extractError(err)),
   });
