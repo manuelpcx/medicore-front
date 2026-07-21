@@ -1,6 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSetPlan } from '../hooks/usePlan';
+import {
+  useSubscription,
+  useCheckout,
+  getPendingCheckoutPlan,
+  clearPendingCheckoutPlan,
+} from '../hooks/usePayments';
 import { Button } from '../components/ui/Button';
 import { CardSkeleton } from '../components/ui/Skeleton';
 import { Icon } from '../components/ui/Icon';
@@ -47,16 +53,171 @@ const PLANS: readonly PlanCard[] = [
 export default function ElegirPlanPage() {
   const navigate = useNavigate();
   const setPlan = useSetPlan();
+  const checkout = useCheckout();
   const [selected, setSelected] = useState<Plan | null>(null);
+
+  // R5/R9: se lee UNA sola vez al montar (useState perezoso, design.md §6) para
+  // que la rama activa ("regreso de Flow" vs. selección normal) no cambie a
+  // mitad de una sesión de render; el botón de R8 la resetea a null a propósito
+  // para volver a la selección sin recargar la página.
+  const [pendingPlan, setPendingPlan] = useState<Plan | null>(() => getPendingCheckoutPlan());
+  // Hook siempre invocado (regla de hooks): `enabled` es lo que evita la
+  // consulta a GET /payments/subscription cuando no hay marcador (R5).
+  const sub = useSubscription({ poll: true, enabled: !!pendingPlan });
+
+  // Efecto: limpia el marcador de sessionStorage solo cuando el resultado del
+  // regreso de Flow ya quedó determinado (éxito R7 o fallido/cancelado R8).
+  // Mientras siga 'pending' (R6) o la consulta esté en error (R9) el marcador
+  // se conserva para poder reintentar en un siguiente montaje.
+  useEffect(() => {
+    if (!pendingPlan || !sub.data) return;
+    const isSuccess = sub.data.status === 'active' && sub.data.plan === pendingPlan;
+    const isFailed = sub.data.status !== 'pending' && !isSuccess;
+    if (isSuccess || isFailed) clearPendingCheckoutPlan();
+  }, [pendingPlan, sub.data]);
 
   const choose = (id: Plan) => {
     setSelected(id);
-    setPlan.mutate(id);
+    if (id === 'free') {
+      setPlan.mutate('free'); // R1 — Free sigue igual, sin checkout
+    } else {
+      checkout.mutate(id); // R2, R3, R4 — Pro/Family via Flow
+    }
   };
 
   const selectedPlan = PLANS.find((p) => p.id === selected);
+  const pendingPlanCard = PLANS.find((p) => p.id === pendingPlan);
 
-  // ── Estado success ────────────────────────────────────────────────────────
+  // ── Rama: regreso desde el checkout de Flow (gate R5) ─────────────────────
+  if (pendingPlan) {
+    if (sub.isLoading) {
+      return (
+        <div style={pageStyle}>
+          <div style={{ ...panelStyle, textAlign: 'center' }}>
+            <Icon name="clock" size={30} color="var(--accent)" style={{ marginBottom: 16 }} />
+            <h1 className="serif" style={{ fontSize: 24, fontWeight: 400, marginBottom: 8 }}>
+              Verificando el pago…
+            </h1>
+            <p style={{ color: 'var(--text2)', fontSize: 14, marginBottom: 20 }}>
+              Estamos confirmando el resultado con Flow.
+            </p>
+            <CardSkeleton />
+          </div>
+        </div>
+      );
+    }
+
+    if (sub.isError) {
+      return (
+        <div style={pageStyle}>
+          <div style={{ ...panelStyle, textAlign: 'center' }}>
+            <div style={errorIconStyle}>
+              <Icon name="alert" size={28} color="var(--red)" />
+            </div>
+            <h1 className="serif" style={{ fontSize: 24, fontWeight: 400, marginBottom: 8 }}>
+              No pudimos verificar el pago
+            </h1>
+            <p style={{ color: 'var(--text2)', fontSize: 14, marginBottom: 24 }}>
+              {extractError(sub.error)}
+            </p>
+            <Button size="lg" onClick={() => sub.refetch()}>
+              Reintentar
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    if (sub.data) {
+      const isSuccess = sub.data.status === 'active' && sub.data.plan === pendingPlan;
+
+      // R7 — pago confirmado
+      if (isSuccess) {
+        return (
+          <div style={pageStyle}>
+            <div style={{ ...panelStyle, textAlign: 'center' }}>
+              <div style={successIconStyle}>
+                <Icon name="check" size={30} color="#fff" />
+              </div>
+              <h1 className="serif" style={{ fontSize: 26, fontWeight: 400, marginBottom: 8 }}>
+                ¡Pago confirmado!
+              </h1>
+              <p style={{ color: 'var(--text2)', fontSize: 14, marginBottom: 28 }}>
+                Tu plan {pendingPlanCard?.nombre ?? pendingPlan} ya está activo.
+              </p>
+              <Button size="lg" onClick={() => navigate('/dashboard')}>
+                Ir al dashboard
+              </Button>
+            </div>
+          </div>
+        );
+      }
+
+      // R6 — pago pendiente de confirmación (webhook puede tardar)
+      if (sub.data.status === 'pending') {
+        return (
+          <div style={pageStyle}>
+            <div style={{ ...panelStyle, textAlign: 'center' }}>
+              <Icon name="clock" size={30} color="var(--accent)" style={{ marginBottom: 16 }} />
+              <h1 className="serif" style={{ fontSize: 24, fontWeight: 400, marginBottom: 8 }}>
+                Pago pendiente de confirmación
+              </h1>
+              <p style={{ color: 'var(--text2)', fontSize: 14, marginBottom: 20, lineHeight: 1.6 }}>
+                Flow todavía no confirma tu pago; la confirmación puede tardar
+                unos minutos. Esta pantalla se actualiza sola cada pocos
+                segundos.
+              </p>
+              <CardSkeleton />
+              <div style={{ marginTop: 20 }}>
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  onClick={() => sub.refetch()}
+                  loading={sub.isFetching}
+                >
+                  Verificar de nuevo
+                </Button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // R8 — pago fallido o cancelado por el usuario en Flow
+      // (status === null / plan reportado distinto del solicitado)
+      return (
+        <div style={pageStyle}>
+          <div style={{ ...panelStyle, textAlign: 'center' }}>
+            <div style={errorIconStyle}>
+              <Icon name="alert" size={28} color="var(--red)" />
+            </div>
+            <h1 className="serif" style={{ fontSize: 24, fontWeight: 400, marginBottom: 8 }}>
+              El pago no se completó
+            </h1>
+            <p style={{ color: 'var(--text2)', fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>
+              No detectamos un pago confirmado. Puede que hayas cancelado el
+              proceso en Flow o que el pago haya sido rechazado.
+            </p>
+            <Button size="lg" onClick={() => setPendingPlan(null)}>
+              Elegir un plan
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    // Estado transitorio imposible en la práctica (ni loading, ni error, ni
+    // data): se mantiene el skeleton para no dejar la pantalla en blanco.
+    return (
+      <div style={pageStyle}>
+        <div style={{ ...panelStyle, textAlign: 'center' }}>
+          <CardSkeleton />
+        </div>
+      </div>
+    );
+  }
+
+  // ── Estado success (Free) ────────────────────────────────────────────────
   if (setPlan.isSuccess) {
     return (
       <div style={pageStyle}>
@@ -100,8 +261,37 @@ export default function ElegirPlanPage() {
     );
   }
 
+  // ── Estado error de checkout (Pro/Family) — R10, R11 ─────────────────────
+  // extractError ya devuelve el mensaje real del backend: distingue 503
+  // ("Pagos con Flow no están disponibles...") de 409 ("Ya tienes una
+  // suscripción en curso."), sin lógica de mapeo adicional en el frontend.
+  if (checkout.isError) {
+    return (
+      <div style={pageStyle}>
+        <div style={{ ...panelStyle, textAlign: 'center' }}>
+          <div style={errorIconStyle}>
+            <Icon name="alert" size={28} color="var(--red)" />
+          </div>
+          <h1 className="serif" style={{ fontSize: 24, fontWeight: 400, marginBottom: 8 }}>
+            No se pudo iniciar el pago
+          </h1>
+          <p style={{ color: 'var(--text2)', fontSize: 14, marginBottom: 24 }}>
+            {extractError(checkout.error)}
+          </p>
+          <Button
+            size="lg"
+            onClick={() => (selected === 'pro' || selected === 'family') && checkout.mutate(selected)}
+            disabled={selected !== 'pro' && selected !== 'family'}
+          >
+            Reintentar
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   // ── Estado empty (defecto) + loading (skeleton) ───────────────────────────
-  const loading = setPlan.isPending;
+  const loading = setPlan.isPending || checkout.isPending;
 
   return (
     <div style={pageStyle}>

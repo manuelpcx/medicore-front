@@ -209,6 +209,28 @@ export interface SetPlanResponse {
   message: string;
 }
 
+// ── Pagos / suscripción Flow (feature 32) ───────────────────────────────────
+export type SubscriptionStatusValue = 'pending' | 'active' | 'past_due' | null;
+
+/** Respuesta de GET /payments/subscription (desenvuelta del ApiResponse). */
+export interface SubscriptionState {
+  plan: Plan;
+  status: SubscriptionStatusValue;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
+}
+
+/** Respuesta de POST /payments/checkout. */
+export interface CheckoutResponse {
+  checkout_url: string;
+}
+
+/** Respuesta de POST /payments/subscription/cancel. */
+export interface CancelSubscriptionResponse {
+  message: string;
+  current_period_end: string | null;
+}
+
 // Form DTOs
 export interface RegisterDto {
   nombre: string;

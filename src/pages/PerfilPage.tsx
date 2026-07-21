@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate } from 'react-router-dom';
 import { usePatient, useUpdatePatient } from '../hooks/usePatient';
+import { useSubscription, useCancelSubscription } from '../hooks/usePayments';
 import { useAuthStore } from '../store/auth.store';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -14,7 +15,7 @@ import { Icon } from '../components/ui/Icon';
 import { fDate, extractError } from '../utils/format';
 import { authApi } from '../api/auth.api';
 import { toast } from '../store/toast.store';
-import type { Plan, UpdatePatientDto } from '../types';
+import type { Plan, SubscriptionState, UpdatePatientDto } from '../types';
 
 // Etiquetas legibles del plan de suscripción.
 const PLAN_LABELS: Record<Plan, string> = {
@@ -22,6 +23,23 @@ const PLAN_LABELS: Record<Plan, string> = {
   pro: 'Pro',
   family: 'Family',
 };
+
+// ── Sección "Tu plan" — sub-estados derivados de GET /payments/subscription ─
+type PlanSectionState =
+  | 'free' // R16 — sin suscripción vigente, comportamiento actual
+  | 'active' // R12
+  | 'cancel_scheduled' // R13 — cancel_at_period_end, current_period_end futura
+  | 'expired_pending_downgrade' // R14 — cancel_at_period_end, current_period_end pasada
+  | 'pending'; // R15
+
+function derivePlanSectionState(sub: SubscriptionState | undefined): PlanSectionState {
+  if (!sub || sub.status === null) return 'free';
+  if (sub.status === 'pending') return 'pending';
+  // status === 'active' | 'past_due'
+  if (!sub.cancel_at_period_end) return 'active';
+  const end = sub.current_period_end ? new Date(sub.current_period_end) : null;
+  return end && end.getTime() > Date.now() ? 'cancel_scheduled' : 'expired_pending_downgrade';
+}
 
 // ── Schema del perfil ───────────────────────────────────────────────────────
 const schema = z.object({
@@ -52,10 +70,13 @@ export default function PerfilPage() {
   const { clearAuth } = useAuthStore();
   const { data: patient, isLoading } = usePatient();
   const update = useUpdatePatient();
+  const { data: subscription, isLoading: subLoading } = useSubscription({ poll: false });
+  const cancelSub = useCancelSubscription();
   const [tab, setTab] = useState<TabKey>('personal');
   const [deleteModal, setDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
 
   const { register, handleSubmit, reset } = useForm<Form>({ resolver: zodResolver(schema) });
 
@@ -95,6 +116,24 @@ export default function PerfilPage() {
     }
   };
 
+  // R18, R19 — mismo patrón que handleDeleteAccount: éxito refresca el
+  // estado mostrado (useCancelSubscription ya invalida ['payments','subscription']),
+  // error muestra el mensaje real del backend sin tocar el estado en pantalla.
+  const handleCancelSubscription = async () => {
+    try {
+      const res = await cancelSub.mutateAsync();
+      toast.success(
+        `Cancelación programada. Conservas tu plan hasta ${fDate(res.current_period_end ?? undefined)}.`,
+      );
+    } catch (err) {
+      toast.error(extractError(err));
+    } finally {
+      setCancelModalOpen(false);
+    }
+  };
+
+  const planState = derivePlanSectionState(subscription);
+
   return (
     <div style={{ animation: 'fadeIn 0.2s ease', maxWidth: 640 }}>
       <div style={{ marginBottom: 24 }}>
@@ -132,8 +171,56 @@ export default function PerfilPage() {
         <div>
           <div style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 4 }}>Tu plan</div>
           <div style={{ fontWeight: 600, fontSize: 18 }}>{PLAN_LABELS[user?.plan ?? 'free']}</div>
+
+          {subLoading ? (
+            <Skeleton width={160} height={14} style={{ marginTop: 6 }} />
+          ) : (
+            <>
+              {/* R15 — pago pendiente de confirmación */}
+              {planState === 'pending' && (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 6,
+                  background: 'var(--amber2)', color: 'var(--amber)',
+                  borderRadius: 999, padding: '3px 10px', fontSize: 12, fontWeight: 600,
+                }}>
+                  <Icon name="clock" size={13} color="var(--amber)" />
+                  Pago pendiente de confirmación
+                </span>
+              )}
+
+              {/* R12 — suscripción activa: próxima fecha de cobro */}
+              {planState === 'active' && subscription?.current_period_end && (
+                <div style={{ fontSize: 13, color: 'var(--text2)', marginTop: 4 }}>
+                  Próximo cobro: {fDate(subscription.current_period_end)}
+                </div>
+              )}
+
+              {/* R13 — cancelada pero vigente hasta la fecha ya pagada */}
+              {planState === 'cancel_scheduled' && (
+                <div style={{ fontSize: 13, color: 'var(--amber)', marginTop: 4 }}>
+                  Cancelada — conservas el plan hasta {fDate(subscription?.current_period_end ?? undefined)}
+                </div>
+              )}
+
+              {/* R14 — vencida, a la espera del downgrade automático */}
+              {planState === 'expired_pending_downgrade' && (
+                <div style={{ fontSize: 13, color: 'var(--text2)', marginTop: 4 }}>
+                  Tu suscripción venció y tu plan volverá a Free en breve.
+                </div>
+              )}
+            </>
+          )}
         </div>
-        <Button variant="secondary" onClick={() => navigate('/elegir-plan')}>Cambiar plan</Button>
+
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Button variant="secondary" onClick={() => navigate('/elegir-plan')}>Cambiar plan</Button>
+          {/* R17 — solo visible con suscripción activa/past_due y sin cancelación programada */}
+          {planState === 'active' && (
+            <Button variant="danger" onClick={() => setCancelModalOpen(true)}>
+              Cancelar suscripción
+            </Button>
+          )}
+        </div>
       </Card>
 
       {/* Tabs */}
@@ -243,6 +330,40 @@ export default function PerfilPage() {
           </div>
         </div>
       )}
+
+      {/* ── Modal confirmación de cancelación de suscripción ────────────── */}
+      <Modal
+        open={cancelModalOpen}
+        onClose={() => setCancelModalOpen(false)}
+        title="Cancelar suscripción"
+        maxWidth={440}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setCancelModalOpen(false)}>
+              Volver
+            </Button>
+            <Button
+              variant="danger"
+              loading={cancelSub.isPending}
+              onClick={handleCancelSubscription}
+            >
+              Cancelar suscripción
+            </Button>
+          </>
+        }
+      >
+        <div style={{
+          background: 'var(--amber2)', border: '1px solid var(--amber)',
+          borderRadius: 8, padding: '12px 14px',
+        }}>
+          <p style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.6, margin: 0 }}>
+            Al cancelar, conservas tu plan {PLAN_LABELS[subscription?.plan ?? 'free']}
+            {' '}hasta la fecha ya pagada
+            {subscription?.current_period_end ? ` (${fDate(subscription.current_period_end)})` : ''}.
+            Después de esa fecha tu cuenta pasará automáticamente al plan Free.
+          </p>
+        </div>
+      </Modal>
 
       {/* ── Modal confirmación de eliminación ────────────────────────── */}
       <Modal
