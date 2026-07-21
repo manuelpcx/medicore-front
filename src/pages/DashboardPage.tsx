@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { parseISO, isValid, differenceInDays } from 'date-fns';
 import { useAuthStore } from '../store/auth.store';
 import { usePatient } from '../hooks/usePatient';
 import { useHistory } from '../hooks/useHistory';
@@ -62,9 +63,15 @@ export default function DashboardPage() {
   const recentHistory = [...history].slice(0, 3);
   const vitals = patient?.perfil;
 
-  // Próxima cita más cercana entre las consultas
+  // Próxima cita más cercana entre las consultas activas o futuras
+  // (excluye citas cuya fecha ya pasó; "hoy" cuenta como activa).
+  const isActiveOrUpcoming = (fechaStr: string) => {
+    const d = parseISO(fechaStr);
+    return isValid(d) && differenceInDays(d, new Date()) >= 0;
+  };
+
   const nextAppt = [...history]
-    .filter((h) => h.proxima_cita)
+    .filter((h) => h.proxima_cita && isActiveOrUpcoming(h.proxima_cita))
     .sort((a, b) => (a.proxima_cita! > b.proxima_cita! ? 1 : -1))[0];
 
   return (
