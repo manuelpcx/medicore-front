@@ -2,10 +2,11 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authApi } from '../api/auth.api';
 import { useAuthStore } from '../store/auth.store';
 import { extractError } from '../utils/format';
+import { safeReturnTo } from '../utils/returnTo';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { useState } from 'react';
@@ -18,6 +19,7 @@ type Form = z.infer<typeof schema>;
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const { setAuth } = useAuthStore();
   const [serverError, setServerError] = useState('');
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Form>({
@@ -29,7 +31,7 @@ export default function LoginPage() {
     try {
       const res = await authApi.login(values);
       setAuth(res.user, res.access_token, res.refresh_token);
-      navigate('/dashboard');
+      navigate(safeReturnTo(params.get('returnTo')) ?? '/dashboard');
     } catch (err) {
       setServerError(extractError(err));
     }

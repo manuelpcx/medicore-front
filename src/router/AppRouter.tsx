@@ -22,6 +22,7 @@ const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage'
 const TermsPage      = lazy(() => import('../pages/legal/TermsPage'));
 const PrivacyPage    = lazy(() => import('../pages/legal/PrivacyPage'));
 const NotFoundPage   = lazy(() => import('../pages/NotFoundPage'));
+const AceptarInvitacionPage = lazy(() => import('../pages/AceptarInvitacionPage'));
 
 const Loader = () => (
   <div style={{ padding: 40 }}><ListSkeleton count={4} /></div>
@@ -70,6 +71,11 @@ export function AppRouter() {
           {/* Rutas públicas para médicos — sin autenticación */}
           <Route path="/doctor" element={<DoctorEntryPage />} />
           <Route path="/doctor/:code" element={<DoctorDashboardPage />} />
+
+          {/* Aceptación de invitación familiar — pública; coincide EXACTAMENTE
+              con el link del correo (/family/accept/:id). La página decide el
+              flujo según autenticación (registro/login con returnTo). */}
+          <Route path="/family/accept/:invitationId" element={<AceptarInvitacionPage />} />
 
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<NotFoundPage />} />

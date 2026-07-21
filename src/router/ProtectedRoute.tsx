@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
 import { toast } from '../store/toast.store';
+import { safeReturnTo } from '../utils/returnTo';
 
 export function ProtectedRoute() {
   const isAuth = useAuthStore((s) => s.isAuthenticated());
@@ -11,7 +12,14 @@ export function ProtectedRoute() {
 
 export function PublicOnlyRoute() {
   const isAuth = useAuthStore((s) => s.isAuthenticated());
-  if (isAuth) return <Navigate to="/dashboard" replace />;
+  const [params] = useSearchParams();
+  if (isAuth) {
+    // Un usuario ya autenticado que llega a /login o /register con un returnTo
+    // interno válido (p. ej. desde el correo de invitación) va a ese destino;
+    // si no, mantiene el comportamiento actual (/dashboard).
+    const dest = safeReturnTo(params.get('returnTo')) ?? '/dashboard';
+    return <Navigate to={dest} replace />;
+  }
   return <Outlet />;
 }
 

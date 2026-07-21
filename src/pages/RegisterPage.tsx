@@ -2,11 +2,12 @@ import React, { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { authApi } from '../api/auth.api';
 import { useAuthStore } from '../store/auth.store';
 import { extractError } from '../utils/format';
+import { safeReturnTo } from '../utils/returnTo';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { Button } from '../components/ui/Button';
@@ -30,6 +31,7 @@ const SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY ?? '6LeIxAcTAAAAAJcZVRq
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const { setAuth } = useAuthStore();
   const [serverError, setServerError] = useState('');
   const captchaRef = useRef<ReCAPTCHA>(null);
@@ -47,7 +49,9 @@ export default function RegisterPage() {
     try {
       const res = await authApi.register({ ...values, recaptcha_token: captchaToken });
       setAuth(res.user, res.access_token, res.refresh_token);
-      navigate('/elegir-plan');
+      // Un invitado que se registra desde el correo vuelve a la aceptación
+      // (returnTo interno); sin returnTo válido, sigue el flujo normal de plan.
+      navigate(safeReturnTo(params.get('returnTo')) ?? '/elegir-plan');
     } catch (err) {
       setServerError(extractError(err));
       // El token v2 es de un solo uso: reseteamos la casilla para el reintento (R15).
