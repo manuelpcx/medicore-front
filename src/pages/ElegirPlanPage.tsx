@@ -11,6 +11,7 @@ import { Button } from '../components/ui/Button';
 import { CardSkeleton } from '../components/ui/Skeleton';
 import { Icon } from '../components/ui/Icon';
 import { extractError } from '../utils/format';
+import { useAuthStore } from '../store/auth.store';
 import type { Plan } from '../types';
 
 // ── Catálogo estático (no hay endpoint GET /plans) ──────────────────────────
@@ -54,7 +55,12 @@ export default function ElegirPlanPage() {
   const navigate = useNavigate();
   const setPlan = useSetPlan();
   const checkout = useCheckout();
-  const [selected, setSelected] = useState<Plan | null>(null);
+  const user = useAuthStore((s) => s.user);
+  const setUser = useAuthStore((s) => s.setUser);
+  // R8: preselecciona la tarjeta del plan actual del usuario al montar
+  // (useState perezoso — solo se evalúa en el primer render, no pisa una
+  // elección en curso del usuario si el store cambia más tarde).
+  const [selected, setSelected] = useState<Plan | null>(() => user?.plan ?? null);
 
   // R5/R9: se lee UNA sola vez al montar (useState perezoso, design.md §6) para
   // que la rama activa ("regreso de Flow" vs. selección normal) no cambie a
@@ -74,7 +80,17 @@ export default function ElegirPlanPage() {
     const isSuccess = sub.data.status === 'active' && sub.data.plan === pendingPlan;
     const isFailed = sub.data.status !== 'pending' && !isSuccess;
     if (isSuccess || isFailed) clearPendingCheckoutPlan();
-  }, [pendingPlan, sub.data]);
+    // R1: sincroniza el store de auth con el plan confirmado por el backend
+    // (sub.data.plan, fuente fresca de GET /payments/subscription) en cuanto
+    // el pago queda confirmado, sin esperar a un nuevo login/refresh. El
+    // guard de valor (user.plan !== sub.data.plan) es obligatorio: evita que
+    // el efecto vuelva a llamar setUser en cada render disparado por su
+    // propia actualización del store (bucle infinito), ya que `user` cambia
+    // de referencia en cada setUser y está en las dependencias del efecto.
+    if (isSuccess && user && user.plan !== sub.data.plan) {
+      setUser({ ...user, plan: sub.data.plan });
+    }
+  }, [pendingPlan, sub.data, user, setUser]);
 
   const choose = (id: Plan) => {
     setSelected(id);
@@ -318,6 +334,12 @@ export default function ElegirPlanPage() {
                   onSelect={() => choose(p.id)}
                 />
               ))}
+        </div>
+
+        <div style={{ textAlign: 'center', marginTop: 20 }}>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} disabled={loading}>
+            Volver
+          </Button>
         </div>
       </div>
     </div>
