@@ -9,11 +9,11 @@ import { LegalLayout, LegalSection } from './LegalLayout';
  */
 export default function TermsPage() {
   return (
-    <LegalLayout title="Términos de Uso" updated="6 de julio de 2026">
+    <LegalLayout title="Términos de Uso" updated="22 de julio de 2026">
       <p>
         Bienvenido a MediHistory. Estos Términos de Uso (los «Términos») regulan el acceso y
-        uso de la aplicación MediHistory (la «Plataforma»), operada por [Nombre de la empresa],
-        RUT [__.___.___-_], con domicilio en [dirección] (el «Titular»). Al registrarte o
+        uso de la aplicación MediHistory (la «Plataforma»), operada por Jesús Medina,
+        RUT 17.021.601-6, con domicilio en Av. Padre Hurtado 13941, San Bernardo (el «Titular»). Al registrarte o
         utilizar la Plataforma, aceptas estos Términos en su totalidad.
       </p>
 
@@ -95,15 +95,15 @@ export default function TermsPage() {
       <LegalSection heading="9. Legislación aplicable y jurisdicción">
         <p>
           Estos Términos se rigen por las leyes de la República de Chile. Cualquier
-          controversia se someterá a los tribunales competentes de [ciudad], Chile.
+          controversia se someterá a los tribunales competentes de Santiago, Chile.
         </p>
       </LegalSection>
 
       <LegalSection heading="10. Contacto">
         <p>
           Para consultas sobre estos Términos, escríbenos a{' '}
-          <a href="mailto:[correo de contacto]" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>
-            [correo de contacto]
+          <a href="mailto:jesus.medina@medi-history.com" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>
+            jesus.medina@medi-history.com
           </a>.
         </p>
       </LegalSection>

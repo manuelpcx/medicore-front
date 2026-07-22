@@ -10,21 +10,21 @@ import { LegalLayout, LegalSection } from './LegalLayout';
  */
 export default function PrivacyPage() {
   return (
-    <LegalLayout title="Política de Privacidad" updated="6 de julio de 2026">
+    <LegalLayout title="Política de Privacidad" updated="22 de julio de 2026">
       <p>
         En MediHistory valoramos y protegemos tu privacidad. Esta Política de Privacidad describe
-        cómo [Nombre de la empresa] (el «Responsable») recopila, utiliza, almacena y protege
+        cómo Jesús Medina (el «Responsable») recopila, utiliza, almacena y protege
         tus datos personales, incluidos tus datos sensibles de salud, en cumplimiento de la
         Ley N° 19.628 sobre Protección de la Vida Privada y la Ley N° 21.719.
       </p>
 
       <LegalSection heading="1. Responsable del tratamiento">
         <p>
-          El responsable del tratamiento de tus datos es [Nombre de la empresa], RUT
-          [__.___.___-_], con domicilio en [dirección]. Para ejercer tus derechos o realizar
+          El responsable del tratamiento de tus datos es Jesús Medina, RUT
+          17.021.601-6, con domicilio en Av. Padre Hurtado 13941, San Bernardo. Para ejercer tus derechos o realizar
           consultas, escríbenos a{' '}
-          <a href="mailto:[correo de contacto]" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>
-            [correo de contacto]
+          <a href="mailto:jesus.medina@medi-history.com" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>
+            jesus.medina@medi-history.com
           </a>.
         </p>
       </LegalSection>
@@ -92,8 +92,8 @@ export default function PrivacyPage() {
           De acuerdo con la legislación aplicable, tienes derecho a acceder, rectificar,
           cancelar y oponerte al tratamiento de tus datos personales, así como a solicitar su
           portabilidad. Para ejercerlos, contáctanos en{' '}
-          <a href="mailto:[correo de contacto]" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>
-            [correo de contacto]
+          <a href="mailto:jesus.medina@medi-history.com" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>
+            jesus.medina@medi-history.com
           </a>.
         </p>
       </LegalSection>
@@ -109,8 +109,8 @@ export default function PrivacyPage() {
         <p>
           Si tienes preguntas sobre esta Política o sobre el tratamiento de tus datos, escríbenos
           a{' '}
-          <a href="mailto:[correo de contacto]" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>
-            [correo de contacto]
+          <a href="mailto:jesus.medina@medi-history.com" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>
+            jesus.medina@medi-history.com
           </a>.
         </p>
       </LegalSection>
