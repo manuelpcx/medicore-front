@@ -13,43 +13,7 @@ import { Icon } from '../components/ui/Icon';
 import { extractError } from '../utils/format';
 import { useAuthStore } from '../store/auth.store';
 import type { Plan } from '../types';
-
-// ── Catálogo estático (no hay endpoint GET /plans) ──────────────────────────
-interface PlanCard {
-  id: Plan;
-  nombre: string;
-  precio: string;
-  color: string;
-  features: string[];
-}
-
-const PLANS: readonly PlanCard[] = [
-  {
-    id: 'free',
-    nombre: 'Free',
-    precio: '$0',
-    color: 'var(--accent)',
-    features: ['Historial personal', 'Hasta 4 exámenes con archivo', 'Alergias y vacunas'],
-  },
-  {
-    id: 'pro',
-    nombre: 'Pro',
-    precio: '$4.990/mes',
-    color: 'var(--accent)',
-    features: ['Todo lo de Free', 'Exámenes con archivo ilimitados'],
-  },
-  {
-    id: 'family',
-    nombre: 'Family',
-    precio: '$8.990/mes',
-    color: 'var(--purple)',
-    features: [
-      'Todo lo de Pro',
-      'Hasta 5 personas en tu grupo: familiares + menores',
-      'Agregar menores a tu cargo (exclusivo Family)',
-    ],
-  },
-] as const;
+import { PLANS, type PlanCard } from '../utils/plans';
 
 export default function ElegirPlanPage() {
   const navigate = useNavigate();

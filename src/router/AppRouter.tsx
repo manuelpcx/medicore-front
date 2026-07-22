@@ -1,9 +1,10 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ProtectedRoute, PublicOnlyRoute, AdminRoute, FamilyOwnerRoute } from './ProtectedRoute';
 import { AppLayout } from '../components/layout/AppLayout';
 import { ListSkeleton } from '../components/ui/Skeleton';
 
+const LandingPage        = lazy(() => import('../pages/LandingPage'));
 const LoginPage          = lazy(() => import('../pages/LoginPage'));
 const RegisterPage       = lazy(() => import('../pages/RegisterPage'));
 const DoctorEntryPage    = lazy(() => import('../pages/DoctorEntryPage'));
@@ -37,6 +38,7 @@ export function AppRouter() {
           <Route element={<PublicOnlyRoute />}>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/" element={<LandingPage />} />
           </Route>
 
           {/* Protected routes */}
@@ -77,7 +79,6 @@ export function AppRouter() {
               flujo según autenticación (registro/login con returnTo). */}
           <Route path="/family/accept/:invitationId" element={<AceptarInvitacionPage />} />
 
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>

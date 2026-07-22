@@ -122,3 +122,19 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
   .dash-columns { grid-template-columns: 1fr !important; }
   .grid-2 { grid-template-columns: 1fr !important; }
 }
+
+/* ── Landing pública ("/") ────────────────────────────────────────────── */
+.landing-nav {
+  position: sticky; top: 0; z-index: 20;
+  background: rgba(238, 242, 245, 0.86);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+.landing-feature-card { transition: transform 0.15s, box-shadow 0.15s; }
+.landing-feature-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+
+@media (max-width: 860px) {
+  .landing-hero { grid-template-columns: 1fr !important; }
+  .landing-features-grid, .landing-plans-grid { grid-template-columns: 1fr !important; }
+  .landing-nav-link { display: none !important; }
+}
