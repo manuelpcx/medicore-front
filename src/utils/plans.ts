@@ -8,6 +8,14 @@ export interface PlanCard {
   id: Plan;
   nombre: string;
   precio: string;
+  /**
+   * Monto mensual en CLP (número, no formateado) — usado como `amount` del
+   * Brick `<CardPayment>` (`initialization.amount`) en `CardPaymentModal`.
+   * Sincronizado A MANO con `medicore-backend/src/payments/payments.service.ts
+   * #buildAutoRecurring()` (mismo criterio ya aplicado a `precio` arriba):
+   * si el precio cambia, hay que actualizar ambos archivos.
+   */
+  montoMensual: number;
   color: string;
   features: string[];
 }
@@ -17,6 +25,7 @@ export const PLANS: readonly PlanCard[] = [
     id: 'free',
     nombre: 'Free',
     precio: '$0',
+    montoMensual: 0,
     color: 'var(--accent)',
     features: ['Historial personal', 'Hasta 4 exámenes con archivo', 'Alergias y vacunas'],
   },
@@ -24,6 +33,7 @@ export const PLANS: readonly PlanCard[] = [
     id: 'pro',
     nombre: 'Pro',
     precio: '$4.990/mes',
+    montoMensual: 4990,
     color: 'var(--accent)',
     features: ['Todo lo de Free', 'Exámenes con archivo ilimitados'],
   },
@@ -31,6 +41,7 @@ export const PLANS: readonly PlanCard[] = [
     id: 'family',
     nombre: 'Family',
     precio: '$8.990/mes',
+    montoMensual: 8990,
     color: 'var(--purple)',
     features: [
       'Todo lo de Pro',

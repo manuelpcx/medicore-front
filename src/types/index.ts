@@ -220,10 +220,12 @@ export interface SubscriptionState {
   cancel_at_period_end: boolean;
 }
 
-/** Respuesta de POST /payments/checkout. */
-export interface CheckoutResponse {
-  checkout_url: string;
-}
+/**
+ * Respuesta de POST /payments/checkout (checkout síncrono con tokenización
+ * de tarjeta, feature `mercadopago-checkout-bricks-tarjeta`): mismo tipo
+ * que GET /payments/subscription — ya no un `{checkout_url}` a redirigir.
+ */
+// (ver SubscriptionState arriba — POST /payments/checkout devuelve ese mismo tipo)
 
 /** Respuesta de POST /payments/subscription/cancel. */
 export interface CancelSubscriptionResponse {

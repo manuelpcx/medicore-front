@@ -96,3 +96,38 @@ export function examFileQuotaMessage(err: unknown): string {
     'Alcanzaste el tope de exámenes con archivo de tu plan Free.'
   );
 }
+
+/**
+ * Variante de `extractError()` que prioriza `data.error` sobre `data.message`.
+ *
+ * Motivo (feature `mercadopago-checkout-bricks-tarjeta`, R9): el
+ * `HttpExceptionFilter` del backend (`http-exception.filter.ts`) arma la
+ * respuesta de error así: `message: HTTP_MESSAGES[status] ?? message` /
+ * `error: message` — es decir, cuando el `status` HTTP está en el mapa
+ * `HTTP_MESSAGES` (400, 401, 403, 404, 409, 413, 422, 500 — la mayoría de
+ * los casos reales), el campo `message` del JSON SIEMPRE lleva el texto
+ * genérico por status ("Solicitud inválida", "Conflicto — el recurso ya
+ * existe", …) y el texto ESPECÍFICO de la excepción (p. ej. el que arma
+ * `sanitizeCheckoutError()` en el backend: "Fondos insuficientes", "tarjeta
+ * rechazada…") queda relegado al campo `error`. `extractError()` prioriza
+ * `data.message`, así que para flujos donde el motivo específico de un
+ * rechazo de negocio es lo que el usuario necesita ver (no un genérico por
+ * status), hay que leer `data.error` primero — mismo patrón ya usado por
+ * `examFileQuotaMessage()` arriba (feature `#26`), no un mecanismo nuevo.
+ *
+ * NO reemplaza `extractError()`: esa función se deja intacta a propósito
+ * (es compartida por ~30 call sites en toda la app — toasts genéricos,
+ * banners de página, etc. — cambiar su orden de prioridad alteraría el
+ * mensaje mostrado en todos ellos sin evaluar cada uno). Usar
+ * `extractSpecificError()` solo donde el motivo específico del rechazo
+ * importa de verdad (p. ej. `CardPaymentModal.tsx`).
+ */
+export function extractSpecificError(err: unknown): string {
+  const e = err as ApiErrorLike;
+  return (
+    e?.response?.data?.error ||
+    e?.response?.data?.message ||
+    e?.message ||
+    'Error inesperado'
+  );
+}

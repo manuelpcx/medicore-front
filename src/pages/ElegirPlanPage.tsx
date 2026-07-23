@@ -1,24 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSetPlan } from '../hooks/usePlan';
-import {
-  useSubscription,
-  useCheckout,
-  getPendingCheckoutPlan,
-  clearPendingCheckoutPlan,
-} from '../hooks/usePayments';
 import { Button } from '../components/ui/Button';
 import { CardSkeleton } from '../components/ui/Skeleton';
 import { Icon } from '../components/ui/Icon';
+import { CardPaymentModal } from '../components/modals/CardPaymentModal';
 import { extractError } from '../utils/format';
 import { useAuthStore } from '../store/auth.store';
-import type { Plan } from '../types';
+import type { Plan, SubscriptionState } from '../types';
 import { PLANS, type PlanCard } from '../utils/plans';
 
 export default function ElegirPlanPage() {
   const navigate = useNavigate();
   const setPlan = useSetPlan();
-  const checkout = useCheckout();
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
   // R8: preselecciona la tarjeta del plan actual del usuario al montar
@@ -26,179 +20,45 @@ export default function ElegirPlanPage() {
   // elección en curso del usuario si el store cambia más tarde).
   const [selected, setSelected] = useState<Plan | null>(() => user?.plan ?? null);
 
-  // R5/R9: se lee UNA sola vez al montar (useState perezoso, design.md §6) para
-  // que la rama activa ("regreso del checkout" vs. selección normal) no cambie
-  // a mitad de una sesión de render; el botón de R8 la resetea a null a
-  // propósito para volver a la selección sin recargar la página.
-  const [pendingPlan, setPendingPlan] = useState<Plan | null>(() => getPendingCheckoutPlan());
-  // Hook siempre invocado (regla de hooks): `enabled` es lo que evita la
-  // consulta a GET /payments/subscription cuando no hay marcador (R5).
-  const sub = useSubscription({ poll: true, enabled: !!pendingPlan });
+  // Modal de pago con tarjeta (Pro/Family) — ver design.md §4. El checkout ya
+  // no redirige a un dominio externo (R4): abre CardPaymentModal, que
+  // tokeniza la tarjeta y llama a POST /payments/checkout de forma síncrona.
+  const [cardModal, setCardModal] = useState<{
+    open: boolean;
+    plan: Extract<Plan, 'pro' | 'family'> | null;
+  }>({ open: false, plan: null });
 
-  // Efecto: limpia el marcador de sessionStorage solo cuando el resultado del
-  // regreso del checkout ya quedó determinado (éxito R7 o fallido/cancelado
-  // R8). Mientras siga 'pending' (R6) o la consulta esté en error (R9) el
-  // marcador se conserva para poder reintentar en un siguiente montaje.
-  useEffect(() => {
-    if (!pendingPlan || !sub.data) return;
-    const isSuccess = sub.data.status === 'active' && sub.data.plan === pendingPlan;
-    const isFailed = sub.data.status !== 'pending' && !isSuccess;
-    if (isSuccess || isFailed) clearPendingCheckoutPlan();
-    // R1: sincroniza el store de auth con el plan confirmado por el backend
-    // (sub.data.plan, fuente fresca de GET /payments/subscription) en cuanto
-    // el pago queda confirmado, sin esperar a un nuevo login/refresh. El
-    // guard de valor (user.plan !== sub.data.plan) es obligatorio: evita que
-    // el efecto vuelva a llamar setUser en cada render disparado por su
-    // propia actualización del store (bucle infinito), ya que `user` cambia
-    // de referencia en cada setUser y está en las dependencias del efecto.
-    if (isSuccess && user && user.plan !== sub.data.plan) {
-      setUser({ ...user, plan: sub.data.plan });
-    }
-  }, [pendingPlan, sub.data, user, setUser]);
+  // Plan pagado confirmado por el backend (via CardPaymentModal.onSuccess) —
+  // reutiliza el bloque de éxito visual ya existente para el camino Free,
+  // adaptado para leer el plan comprado (design.md §4, paso 7).
+  const [paidPlan, setPaidPlan] = useState<Plan | null>(null);
 
   const choose = (id: Plan) => {
     setSelected(id);
     if (id === 'free') {
       setPlan.mutate('free'); // R1 — Free sigue igual, sin checkout
     } else {
-      checkout.mutate(id); // R2, R3, R4 — Pro/Family via MercadoPago
+      setCardModal({ open: true, plan: id }); // R2, R3, R4 — abre el formulario de tarjeta embebido
     }
   };
 
+  const handleCardSuccess = (state: SubscriptionState) => {
+    // R1 (design §4 paso 7): sincroniza el store de auth con el plan
+    // confirmado por el backend en cuanto el pago queda confirmado, sin
+    // esperar a un nuevo login/refresh.
+    if (user && user.plan !== state.plan) {
+      setUser({ ...user, plan: state.plan });
+    }
+    setCardModal({ open: false, plan: null });
+    setPaidPlan(state.plan);
+  };
+
   const selectedPlan = PLANS.find((p) => p.id === selected);
-  const pendingPlanCard = PLANS.find((p) => p.id === pendingPlan);
+  const paidPlanCard = PLANS.find((p) => p.id === paidPlan);
 
-  // ── Rama: regreso desde el checkout de MercadoPago (gate R5) ──────────────
-  if (pendingPlan) {
-    if (sub.isLoading) {
-      return (
-        <div style={pageStyle}>
-          <div style={{ ...panelStyle, textAlign: 'center' }}>
-            <Icon name="clock" size={30} color="var(--accent)" style={{ marginBottom: 16 }} />
-            <h1 className="serif" style={{ fontSize: 24, fontWeight: 400, marginBottom: 8 }}>
-              Verificando el pago…
-            </h1>
-            <p style={{ color: 'var(--text2)', fontSize: 14, marginBottom: 20 }}>
-              Estamos confirmando el resultado de tu pago.
-            </p>
-            <CardSkeleton />
-          </div>
-        </div>
-      );
-    }
-
-    if (sub.isError) {
-      return (
-        <div style={pageStyle}>
-          <div style={{ ...panelStyle, textAlign: 'center' }}>
-            <div style={errorIconStyle}>
-              <Icon name="alert" size={28} color="var(--red)" />
-            </div>
-            <h1 className="serif" style={{ fontSize: 24, fontWeight: 400, marginBottom: 8 }}>
-              No pudimos verificar el pago
-            </h1>
-            <p style={{ color: 'var(--text2)', fontSize: 14, marginBottom: 24 }}>
-              {extractError(sub.error)}
-            </p>
-            <Button size="lg" onClick={() => sub.refetch()}>
-              Reintentar
-            </Button>
-          </div>
-        </div>
-      );
-    }
-
-    if (sub.data) {
-      const isSuccess = sub.data.status === 'active' && sub.data.plan === pendingPlan;
-
-      // R7 — pago confirmado
-      if (isSuccess) {
-        return (
-          <div style={pageStyle}>
-            <div style={{ ...panelStyle, textAlign: 'center' }}>
-              <div style={successIconStyle}>
-                <Icon name="check" size={30} color="#fff" />
-              </div>
-              <h1 className="serif" style={{ fontSize: 26, fontWeight: 400, marginBottom: 8 }}>
-                ¡Pago confirmado!
-              </h1>
-              <p style={{ color: 'var(--text2)', fontSize: 14, marginBottom: 28 }}>
-                Tu plan {pendingPlanCard?.nombre ?? pendingPlan} ya está activo.
-              </p>
-              <Button size="lg" onClick={() => navigate('/dashboard')}>
-                Ir al dashboard
-              </Button>
-            </div>
-          </div>
-        );
-      }
-
-      // R6 — pago pendiente de confirmación (webhook puede tardar)
-      if (sub.data.status === 'pending') {
-        return (
-          <div style={pageStyle}>
-            <div style={{ ...panelStyle, textAlign: 'center' }}>
-              <Icon name="clock" size={30} color="var(--accent)" style={{ marginBottom: 16 }} />
-              <h1 className="serif" style={{ fontSize: 24, fontWeight: 400, marginBottom: 8 }}>
-                Pago pendiente de confirmación
-              </h1>
-              <p style={{ color: 'var(--text2)', fontSize: 14, marginBottom: 20, lineHeight: 1.6 }}>
-                MercadoPago todavía no confirma tu pago; la confirmación puede
-                tardar unos minutos. Esta pantalla se actualiza sola cada
-                pocos segundos.
-              </p>
-              <CardSkeleton />
-              <div style={{ marginTop: 20 }}>
-                <Button
-                  size="lg"
-                  variant="secondary"
-                  onClick={() => sub.refetch()}
-                  loading={sub.isFetching}
-                >
-                  Verificar de nuevo
-                </Button>
-              </div>
-            </div>
-          </div>
-        );
-      }
-
-      // R8 — pago fallido o cancelado por el usuario en el checkout
-      // (status === null / plan reportado distinto del solicitado)
-      return (
-        <div style={pageStyle}>
-          <div style={{ ...panelStyle, textAlign: 'center' }}>
-            <div style={errorIconStyle}>
-              <Icon name="alert" size={28} color="var(--red)" />
-            </div>
-            <h1 className="serif" style={{ fontSize: 24, fontWeight: 400, marginBottom: 8 }}>
-              El pago no se completó
-            </h1>
-            <p style={{ color: 'var(--text2)', fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>
-              No detectamos un pago confirmado. Puede que hayas cancelado el
-              proceso de pago o que el pago haya sido rechazado.
-            </p>
-            <Button size="lg" onClick={() => setPendingPlan(null)}>
-              Elegir un plan
-            </Button>
-          </div>
-        </div>
-      );
-    }
-
-    // Estado transitorio imposible en la práctica (ni loading, ni error, ni
-    // data): se mantiene el skeleton para no dejar la pantalla en blanco.
-    return (
-      <div style={pageStyle}>
-        <div style={{ ...panelStyle, textAlign: 'center' }}>
-          <CardSkeleton />
-        </div>
-      </div>
-    );
-  }
-
-  // ── Estado success (Free) ────────────────────────────────────────────────
-  if (setPlan.isSuccess) {
+  // ── Estado success (Free o Pro/Family vía tarjeta) ───────────────────────
+  if (setPlan.isSuccess || paidPlan) {
+    const nombre = paidPlan ? (paidPlanCard?.nombre ?? paidPlan) : (selectedPlan?.nombre ?? '');
     return (
       <div style={pageStyle}>
         <div style={{ ...panelStyle, textAlign: 'center' }}>
@@ -206,7 +66,7 @@ export default function ElegirPlanPage() {
             <Icon name="check" size={30} color="#fff" />
           </div>
           <h1 className="serif" style={{ fontSize: 26, fontWeight: 400, marginBottom: 8 }}>
-            ¡Plan {selectedPlan?.nombre ?? ''} activado!
+            ¡Plan {nombre} activado!
           </h1>
           <p style={{ color: 'var(--text2)', fontSize: 14, marginBottom: 28 }}>
             Tu plan quedó activo. Ya puedes empezar a usar MediHistory.
@@ -219,7 +79,7 @@ export default function ElegirPlanPage() {
     );
   }
 
-  // ── Estado error ──────────────────────────────────────────────────────────
+  // ── Estado error (Free) ──────────────────────────────────────────────────
   if (setPlan.isError) {
     return (
       <div style={pageStyle}>
@@ -241,37 +101,8 @@ export default function ElegirPlanPage() {
     );
   }
 
-  // ── Estado error de checkout (Pro/Family) — R10, R11 ─────────────────────
-  // extractError ya devuelve el mensaje real del backend: distingue 503
-  // ("Pagos con MercadoPago no están disponibles...") de 409 ("Ya tienes una
-  // suscripción en curso."), sin lógica de mapeo adicional en el frontend.
-  if (checkout.isError) {
-    return (
-      <div style={pageStyle}>
-        <div style={{ ...panelStyle, textAlign: 'center' }}>
-          <div style={errorIconStyle}>
-            <Icon name="alert" size={28} color="var(--red)" />
-          </div>
-          <h1 className="serif" style={{ fontSize: 24, fontWeight: 400, marginBottom: 8 }}>
-            No se pudo iniciar el pago
-          </h1>
-          <p style={{ color: 'var(--text2)', fontSize: 14, marginBottom: 24 }}>
-            {extractError(checkout.error)}
-          </p>
-          <Button
-            size="lg"
-            onClick={() => (selected === 'pro' || selected === 'family') && checkout.mutate(selected)}
-            disabled={selected !== 'pro' && selected !== 'family'}
-          >
-            Reintentar
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   // ── Estado empty (defecto) + loading (skeleton) ───────────────────────────
-  const loading = setPlan.isPending || checkout.isPending;
+  const loading = setPlan.isPending;
 
   return (
     <div style={pageStyle}>
@@ -306,6 +137,15 @@ export default function ElegirPlanPage() {
           </Button>
         </div>
       </div>
+
+      {cardModal.plan && (
+        <CardPaymentModal
+          open={cardModal.open}
+          plan={cardModal.plan}
+          onClose={() => setCardModal({ open: false, plan: null })}
+          onSuccess={handleCardSuccess}
+        />
+      )}
     </div>
   );
 }
