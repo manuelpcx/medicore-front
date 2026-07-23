@@ -2,24 +2,24 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { paymentsApi } from '../api/payments.api';
 import type { Plan } from '../types';
 
-// ── Marcador de "regreso de Flow" (sessionStorage) ──────────────────────────
-// Ver design.md §4: el backend construye urlReturn como
+// ── Marcador de "regreso del checkout" (sessionStorage) ─────────────────────
+// Ver design.md §4: el backend construye back_url como
 // `${frontendBaseUrl}/elegir-plan` sin query params, así que el frontend deja
-// su propio marcador en sessionStorage ANTES de redirigir a Flow (R4), para
-// poder distinguir al volver a montar ElegirPlanPage entre una visita normal
-// (R5) y un regreso desde el checkout (R6-R9).
-const FLOW_CHECKOUT_FLAG = 'medicore:flow_checkout_plan';
+// su propio marcador en sessionStorage ANTES de redirigir a MercadoPago (R4),
+// para poder distinguir al volver a montar ElegirPlanPage entre una visita
+// normal (R5) y un regreso desde el checkout (R6-R9).
+const CHECKOUT_FLAG = 'medicore:checkout_plan';
 
 export function setPendingCheckoutPlan(plan: Plan): void {
-  sessionStorage.setItem(FLOW_CHECKOUT_FLAG, plan);
+  sessionStorage.setItem(CHECKOUT_FLAG, plan);
 }
 
 export function getPendingCheckoutPlan(): Plan | null {
-  return (sessionStorage.getItem(FLOW_CHECKOUT_FLAG) as Plan | null) ?? null;
+  return (sessionStorage.getItem(CHECKOUT_FLAG) as Plan | null) ?? null;
 }
 
 export function clearPendingCheckoutPlan(): void {
-  sessionStorage.removeItem(FLOW_CHECKOUT_FLAG);
+  sessionStorage.removeItem(CHECKOUT_FLAG);
 }
 
 // ── Hooks React Query ────────────────────────────────────────────────────────
@@ -28,9 +28,9 @@ const SUBSCRIPTION_KEY = ['payments', 'subscription'];
 
 /**
  * GET /payments/subscription. `poll` habilita refetch automático mientras
- * el estado siga 'pending' (usado por ElegirPlanPage en el regreso de Flow,
- * R6); PerfilPage la usa con `poll: false` (una sola consulta + refetch
- * manual/invalidación tras cancelar, R12–R19).
+ * el estado siga 'pending' (usado por ElegirPlanPage en el regreso del
+ * checkout, R6); PerfilPage la usa con `poll: false` (una sola consulta +
+ * refetch manual/invalidación tras cancelar, R12–R19).
  */
 export function useSubscription(options?: { poll?: boolean; enabled?: boolean }) {
   return useQuery({

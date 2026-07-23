@@ -209,7 +209,7 @@ export interface SetPlanResponse {
   message: string;
 }
 
-// ── Pagos / suscripción Flow (feature 32) ───────────────────────────────────
+// ── Pagos / suscripción MercadoPago (feature 32, migrada de Flow en la 41) ──
 export type SubscriptionStatusValue = 'pending' | 'active' | 'past_due' | null;
 
 /** Respuesta de GET /payments/subscription (desenvuelta del ApiResponse). */

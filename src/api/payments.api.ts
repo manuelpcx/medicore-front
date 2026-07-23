@@ -8,12 +8,13 @@ import type {
 } from '../types';
 
 /**
- * Cliente HTTP del dominio Pagos (Flow). Consume `payments/` del backend
- * (feature 31, ya `done`). Mismo patrón que `family.api.ts`: desenvuelve
- * `r.data.data` sobre el `api` compartido de `axios.ts`.
+ * Cliente HTTP del dominio Pagos (MercadoPago). Consume `payments/` del
+ * backend (feature 31, migrada de Flow a MercadoPago en la feature 41).
+ * Mismo patrón que `family.api.ts`: desenvuelve `r.data.data` sobre el `api`
+ * compartido de `axios.ts`.
  *
- * `POST /payments/webhook` NO se expone aquí: es público y lo invoca Flow
- * directamente, el frontend nunca lo llama.
+ * `POST /payments/webhook` NO se expone aquí: es público y lo invoca
+ * MercadoPago directamente, el frontend nunca lo llama.
  */
 export const paymentsApi = {
   checkout: (plan: Extract<Plan, 'pro' | 'family'>) =>
