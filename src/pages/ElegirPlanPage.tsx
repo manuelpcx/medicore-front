@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSetPlan } from '../hooks/usePlan';
+import { useSubscription } from '../hooks/usePayments';
 import { Button } from '../components/ui/Button';
 import { CardSkeleton } from '../components/ui/Skeleton';
 import { Icon } from '../components/ui/Icon';
@@ -9,6 +10,10 @@ import { extractError } from '../utils/format';
 import { useAuthStore } from '../store/auth.store';
 import type { Plan, SubscriptionState } from '../types';
 import { PLANS, type PlanCard } from '../utils/plans';
+
+// R25 — tiempo acotado de polling antes de mostrar "esto está tardando más
+// de lo normal" (ver specs/mercadopago-activar-plan-en-cobro-real/design.md §1.4).
+const CONFIRM_TIMEOUT_MS = 60_000;
 
 export default function ElegirPlanPage() {
   const navigate = useNavigate();
@@ -28,10 +33,50 @@ export default function ElegirPlanPage() {
     plan: Extract<Plan, 'pro' | 'family'> | null;
   }>({ open: false, plan: null });
 
-  // Plan pagado confirmado por el backend (via CardPaymentModal.onSuccess) —
-  // reutiliza el bloque de éxito visual ya existente para el camino Free,
-  // adaptado para leer el plan comprado (design.md §4, paso 7).
+  // Plan pagado y ya ACTIVO (confirmado por el backend, vía webhook/reconciliación
+  // del cobro real, detectado por el polling de abajo) — reutiliza el bloque
+  // de éxito visual ya existente para el camino Free (design.md §4/§5 paso 8).
   const [paidPlan, setPaidPlan] = useState<Plan | null>(null);
+
+  // ── Confirmación diferida del cobro real (R23-R26) ───────────────────────
+  // Tras `checkout()` con `status:'pending'` (esta feature: el checkout ya no
+  // activa el plan de inmediato, solo verifica la tarjeta), se activa este
+  // sub-estado "confirmando" que hace polling a GET /payments/subscription
+  // hasta detectar `active` (éxito), el retorno a `free` (cobro real
+  // rechazado) o un timeout acotado (R25).
+  const [confirming, setConfirming] = useState<{ plan: Extract<Plan, 'pro' | 'family'> } | null>(null);
+  const [confirmRejected, setConfirmRejected] = useState(false);
+  const [confirmTimedOut, setConfirmTimedOut] = useState(false);
+
+  const confirmPoll = useSubscription({ poll: true, enabled: !!confirming && !confirmRejected && !confirmTimedOut });
+
+  // R24 — la suscripción pasó a 'active': sincroniza el store de auth y
+  // muestra el bloque de éxito final ya existente, deteniendo el polling
+  // (confirming pasa a null -> `enabled` de useSubscription queda en false).
+  // R26 — la suscripción ya no está vigente (status null, plan free) tras
+  // haber estado 'pending': el cobro real fue rechazado.
+  useEffect(() => {
+    if (!confirming || confirmRejected || confirmTimedOut) return;
+    const data = confirmPoll.data;
+    if (!data) return;
+    if (data.status === 'active') {
+      if (user && user.plan !== data.plan) {
+        setUser({ ...user, plan: data.plan });
+      }
+      setPaidPlan(data.plan);
+      setConfirming(null);
+    } else if (data.status === null) {
+      setConfirmRejected(true);
+    }
+  }, [confirmPoll.data, confirming, confirmRejected, confirmTimedOut, user, setUser]);
+
+  // R25 — timeout acotado: si sigue "confirmando" sin resolución, se detiene
+  // el polling activo (enabled pasa a false) y se muestra la vía de escape.
+  useEffect(() => {
+    if (!confirming || confirmRejected) return;
+    const timer = window.setTimeout(() => setConfirmTimedOut(true), CONFIRM_TIMEOUT_MS);
+    return () => window.clearTimeout(timer);
+  }, [confirming, confirmRejected]);
 
   const choose = (id: Plan) => {
     setSelected(id);
@@ -43,18 +88,112 @@ export default function ElegirPlanPage() {
   };
 
   const handleCardSuccess = (state: SubscriptionState) => {
-    // R1 (design §4 paso 7): sincroniza el store de auth con el plan
-    // confirmado por el backend en cuanto el pago queda confirmado, sin
-    // esperar a un nuevo login/refresh.
-    if (user && user.plan !== state.plan) {
-      setUser({ ...user, plan: state.plan });
-    }
     setCardModal({ open: false, plan: null });
-    setPaidPlan(state.plan);
+    if (state.status === 'active') {
+      // Defensivo: con el backend actual `checkout()` ya nunca devuelve
+      // 'active' de forma síncrona, pero si algún día volviera a hacerlo,
+      // no tiene sentido pasar por el estado "confirmando".
+      if (user && user.plan !== state.plan) {
+        setUser({ ...user, plan: state.plan });
+      }
+      setPaidPlan(state.plan);
+      return;
+    }
+    // R23 — `status:'pending'`: la tarjeta quedó verificada, el cobro real se
+    // está confirmando. Activa el sub-estado "confirmando" en vez del bloque
+    // de éxito final.
+    setConfirmRejected(false);
+    setConfirmTimedOut(false);
+    setConfirming({ plan: state.plan as Extract<Plan, 'pro' | 'family'> });
+  };
+
+  const retryAfterRejection = () => {
+    const plan = confirming?.plan ?? selected;
+    setConfirming(null);
+    setConfirmRejected(false);
+    setConfirmTimedOut(false);
+    if (plan && plan !== 'free') {
+      setCardModal({ open: true, plan });
+    }
   };
 
   const selectedPlan = PLANS.find((p) => p.id === selected);
   const paidPlanCard = PLANS.find((p) => p.id === paidPlan);
+  const confirmingPlanCard = PLANS.find((p) => p.id === confirming?.plan);
+
+  // ── Estado "confirmando" (Pro/Family, cobro real en curso) ────────────────
+  // R23-R26: tarjeta ya verificada, esperando que el webhook/reconciliación
+  // del backend confirme el cobro real. No es el bloque de éxito final (ese
+  // requiere status:'active', más abajo).
+  if (confirming) {
+    if (confirmRejected) {
+      return (
+        <div style={pageStyle}>
+          <div style={{ ...panelStyle, textAlign: 'center' }}>
+            <div style={errorIconStyle}>
+              <Icon name="alert" size={28} color="var(--red)" />
+            </div>
+            <h1 className="serif" style={{ fontSize: 24, fontWeight: 400, marginBottom: 8 }}>
+              El pago no pudo confirmarse
+            </h1>
+            <p style={{ color: 'var(--text2)', fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>
+              MercadoPago no pudo confirmar el cobro de tu plan{' '}
+              {confirmingPlanCard?.nombre ?? confirming.plan}. Tu plan sigue en Free — puedes
+              intentarlo de nuevo con la misma tarjeta u otra.
+            </p>
+            <Button size="lg" onClick={retryAfterRejection}>
+              Reintentar pago
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    if (confirmTimedOut) {
+      return (
+        <div style={pageStyle}>
+          <div style={{ ...panelStyle, textAlign: 'center' }}>
+            <div style={successIconStyle}>
+              <Icon name="clock" size={28} color="#fff" />
+            </div>
+            <h1 className="serif" style={{ fontSize: 24, fontWeight: 400, marginBottom: 8 }}>
+              Esto está tardando más de lo normal
+            </h1>
+            <p style={{ color: 'var(--text2)', fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>
+              Seguimos confirmando el pago de tu plan{' '}
+              {confirmingPlanCard?.nombre ?? confirming.plan} con MercadoPago. Puedes seguir
+              usando MediHistory mientras tanto — verás tu plan actualizado en tu Perfil en
+              cuanto se confirme.
+            </p>
+            <Button size="lg" onClick={() => navigate('/dashboard')}>
+              Ir al dashboard
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div style={pageStyle}>
+        <div style={{ ...panelStyle, textAlign: 'center' }}>
+          <div style={successIconStyle}>
+            <Icon name="clock" size={28} color="#fff" />
+          </div>
+          <h1 className="serif" style={{ fontSize: 24, fontWeight: 400, marginBottom: 8 }}>
+            Confirmando tu pago…
+          </h1>
+          <p style={{ color: 'var(--text2)', fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>
+            Tu tarjeta quedó verificada. Estamos confirmando el cobro de tu plan{' '}
+            {confirmingPlanCard?.nombre ?? confirming.plan} con MercadoPago — esto no bloquea tu
+            sesión, puedes seguir usando MediHistory mientras se confirma.
+          </p>
+          <Button variant="secondary" size="lg" onClick={() => navigate('/dashboard')}>
+            Ir al dashboard mientras se confirma
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // ── Estado success (Free o Pro/Family vía tarjeta) ───────────────────────
   if (setPlan.isSuccess || paidPlan) {

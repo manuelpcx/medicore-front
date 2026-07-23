@@ -106,10 +106,12 @@ export function CardPaymentModal({ open, onClose, plan, onSuccess }: Props) {
             <Icon name="check" size={26} color="#fff" />
           </div>
           <h3 className="serif" style={{ fontSize: 22, fontWeight: 400, marginBottom: 8 }}>
-            ¡Pago confirmado!
+            Tarjeta verificada
           </h3>
-          <p style={{ color: 'var(--text2)', fontSize: 14 }}>
-            Tu plan {planCard?.nombre ?? plan} ya está activo.
+          <p style={{ color: 'var(--text2)', fontSize: 14, lineHeight: 1.6 }}>
+            Tu tarjeta quedó verificada y estamos confirmando el pago de tu
+            plan {planCard?.nombre ?? plan}. Puedes seguir usando MediHistory
+            mientras se confirma.
           </p>
         </div>
       ) : (
