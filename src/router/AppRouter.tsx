@@ -3,8 +3,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ProtectedRoute, PublicOnlyRoute, AdminRoute, FamilyOwnerRoute } from './ProtectedRoute';
 import { AppLayout } from '../components/layout/AppLayout';
 import { ListSkeleton } from '../components/ui/Skeleton';
+import LandingPage from '../pages/LandingPage';
 
-const LandingPage        = lazy(() => import('../pages/LandingPage'));
 const LoginPage          = lazy(() => import('../pages/LoginPage'));
 const RegisterPage       = lazy(() => import('../pages/RegisterPage'));
 const DoctorEntryPage    = lazy(() => import('../pages/DoctorEntryPage'));
