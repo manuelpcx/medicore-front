@@ -8,6 +8,7 @@ import { useCheckout } from '../../hooks/usePayments';
 import { extractSpecificError } from '../../utils/format';
 import { useAuthStore } from '../../store/auth.store';
 import { PLANS } from '../../utils/plans';
+import mpLogoUrl from '../../assets/mp-logo-handshake-horizontal.svg';
 import type { Plan, SubscriptionState } from '../../types';
 
 interface Props {
@@ -118,7 +119,7 @@ export function CardPaymentModal({ open, onClose, plan, onSuccess }: Props) {
         <div>
           <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 16, lineHeight: 1.6 }}>
             Ingresa los datos de tu tarjeta. MercadoPago procesa el pago de
-            forma segura dentro de este formulario — Medicore nunca ve ni
+            forma segura dentro de este formulario — MediHistory nunca ve ni
             guarda tu número de tarjeta.
           </p>
 
@@ -177,6 +178,11 @@ export function CardPaymentModal({ open, onClose, plan, onSuccess }: Props) {
             </div>
           </div>
 
+          <div style={trustBadgeStyle}>
+            <img src={mpLogoUrl} alt="MercadoPago" style={mpLogoStyle} />
+            <span>Pago procesado de forma segura por MercadoPago.</span>
+          </div>
+
           {submitting && (
             <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text2)', marginTop: 12 }}>
               Procesando pago…
@@ -204,4 +210,12 @@ const errorBannerStyle: React.CSSProperties = {
 };
 const loadingOverlayStyle: React.CSSProperties = {
   position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+};
+const trustBadgeStyle: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+  marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border)',
+  color: 'var(--text3)', fontSize: 12, lineHeight: 1.4, textAlign: 'center',
+};
+const mpLogoStyle: React.CSSProperties = {
+  width: 110, maxWidth: 110, height: 'auto', flexShrink: 0,
 };
