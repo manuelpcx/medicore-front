@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSetPlan } from '../hooks/usePlan';
 import { useSubscription } from '../hooks/usePayments';
@@ -47,6 +47,11 @@ export default function ElegirPlanPage() {
   const [confirming, setConfirming] = useState<{ plan: Extract<Plan, 'pro' | 'family'> } | null>(null);
   const [confirmRejected, setConfirmRejected] = useState(false);
   const [confirmTimedOut, setConfirmTimedOut] = useState(false);
+  // Fix bug lectura-stale-rechazo-falso (R1): marca el instante en que se
+  // activa `confirming` para el pago en curso, para poder descartar
+  // lecturas de `confirmPoll` anteriores a ese instante (caché stale de
+  // antes de pagar o de un intento previo).
+  const confirmStartedAtRef = useRef(0);
 
   const confirmPoll = useSubscription({ poll: true, enabled: !!confirming && !confirmRejected && !confirmTimedOut });
 
@@ -59,6 +64,10 @@ export default function ElegirPlanPage() {
     if (!confirming || confirmRejected || confirmTimedOut) return;
     const data = confirmPoll.data;
     if (!data) return;
+    // Fix bug lectura-stale-rechazo-falso (R2, R3, R4, R6): ignora
+    // cualquier lectura anterior al inicio de la confirmación actual (dato
+    // cacheado de antes de pagar / de un intento previo).
+    if (confirmPoll.dataUpdatedAt < confirmStartedAtRef.current) return;
     if (data.status === 'active') {
       if (user && user.plan !== data.plan) {
         setUser({ ...user, plan: data.plan });
@@ -68,7 +77,7 @@ export default function ElegirPlanPage() {
     } else if (data.status === null) {
       setConfirmRejected(true);
     }
-  }, [confirmPoll.data, confirming, confirmRejected, confirmTimedOut, user, setUser]);
+  }, [confirmPoll.data, confirmPoll.dataUpdatedAt, confirming, confirmRejected, confirmTimedOut, user, setUser]);
 
   // R25 — timeout acotado: si sigue "confirmando" sin resolución, se detiene
   // el polling activo (enabled pasa a false) y se muestra la vía de escape.
@@ -102,6 +111,11 @@ export default function ElegirPlanPage() {
     // R23 — `status:'pending'`: la tarjeta quedó verificada, el cobro real se
     // está confirmando. Activa el sub-estado "confirmando" en vez del bloque
     // de éxito final.
+    // Fix bug lectura-stale-rechazo-falso (R1, R5): fija el timestamp de
+    // inicio ANTES de activar `confirming` (síncrono, no pasa por el ciclo
+    // de commit de React), para que la guardia de frescura del useEffect de
+    // arriba pueda descartar cualquier lectura cacheada previa a este pago.
+    confirmStartedAtRef.current = Date.now();
     setConfirmRejected(false);
     setConfirmTimedOut(false);
     setConfirming({ plan: state.plan as Extract<Plan, 'pro' | 'family'> });
