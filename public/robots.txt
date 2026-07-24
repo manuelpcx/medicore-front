@@ -1,0 +1,21 @@
+User-agent: *
+Allow: /
+Allow: /login
+Allow: /register
+Allow: /legal/terms
+Allow: /legal/privacy
+
+Disallow: /dashboard
+Disallow: /historial
+Disallow: /medicamentos
+Disallow: /examenes
+Disallow: /alergias
+Disallow: /vacunas
+Disallow: /perfil
+Disallow: /familia
+Disallow: /admin
+Disallow: /elegir-plan
+Disallow: /doctor
+Disallow: /family/accept
+
+Sitemap: https://medi-history.com/sitemap.xml
